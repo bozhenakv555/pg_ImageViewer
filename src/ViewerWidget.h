@@ -86,6 +86,8 @@ public:
 	std::vector<QPoint> clipEdgeSH(const std::vector<QPoint>& points, int xmin);
 	std::vector<QPoint> clipSutherlandHodgman(const std::vector<QPoint>& points);
 
+	std::vector<QPoint> clipCyrusBeck(QPoint P1, QPoint P2);
+
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
 };

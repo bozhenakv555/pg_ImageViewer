@@ -120,11 +120,18 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 {
 	if (!img || !data) return;
 
+	//hned orezeme
+	std::vector<QPoint> clipped = clipCyrusBeck(start, end);
+	if (clipped.size() < 2) return; //usecka je uplne mimo, nepokracujeme
+
+	QPoint p1 = clipped[0];
+	QPoint p2 = clipped[1];
+
 	if (algType == 0) {
-		drawLineDDA(start, end, color);
+		drawLineDDA(p1, p2, color);
 	}
 	else {
-		drawLineBresenham(start, end, color);
+		drawLineBresenham(p1, p2, color);
 	}
 	update();
 
@@ -438,6 +445,67 @@ std::vector<QPoint> ViewerWidget::clipSutherlandHodgman(const std::vector<QPoint
 	}
 
 	return clipped;
+}
+
+std::vector<QPoint> ViewerWidget::clipCyrusBeck(QPoint P1, QPoint P2) {
+	std::vector<QPoint> newpoints;
+	
+	double tLow = 0;
+	double tUp = 1;
+	QPoint d = P2 - P1;
+
+	QPoint edges[4] = {QPoint(5,5), QPoint(5, (img->height()) - 5), QPoint(img->width() - 5, img->height() - 5), QPoint(img->width() - 5, 5)};
+
+	for (int i = 0; i < 4; i++) {
+		double u, v;
+		if (i == 3) {
+			u = edges[0].x() - edges[i].x();
+			v = edges[0].y() - edges[i].y();
+		}
+		else {
+			u = edges[i + 1].x() - edges[i].x();
+			v = edges[i + 1].y() - edges[i].y();
+		}
+		
+		QPoint n(v, -u);
+
+		QPoint w = P1 - edges[i];
+
+		int dn = d.x() * n.x() + d.y() * n.y();
+		int wn = w.x() * n.x() + w.y() * n.y();
+
+		if (dn != 0) {
+			double t = -(double)wn / dn;
+			if (dn > 0) {
+				tLow = std::max(t, tLow);
+			}
+			else {
+				tUp = std::min(t, tUp);
+			}
+		}
+		else { //usecka je rovnobezna s hranou
+			if (wn < 0) return std::vector<QPoint>(); //ak je bod vonku (wn < 0), cela usecka je mimo
+		}
+
+	}
+
+	if (tLow == 0 && tUp == 1) {
+		bool P1_inside = (P1.x() >= 0 && P1.x() <= img->width() - 1 &&
+			P1.y() >= 0 && P1.y() <= img->height() - 1);
+		if (P1_inside) {
+			newpoints.push_back(P1);
+			newpoints.push_back(P2);
+		}
+	}
+	else if (tLow <= tUp) {
+		QPoint P1_new(qRound(P1.x() + d.x() * tLow), qRound(P1.y() + d.y() * tLow));
+		QPoint P2_new(qRound(P1.x() + d.x() * tUp), qRound(P1.y() + d.y() * tUp));
+
+		newpoints.push_back(P1_new);
+		newpoints.push_back(P2_new);
+	}
+
+	return newpoints;
 }
 
 //Slots
