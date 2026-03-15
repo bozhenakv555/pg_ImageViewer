@@ -23,6 +23,7 @@ void ViewerWidget::resizeWidget(QSize size)
 	this->resize(size);
 	this->setMinimumSize(size);
 	this->setMaximumSize(size);
+	this->setFixedSize(size);
 }
 
 //Image functions
@@ -282,31 +283,48 @@ void ViewerWidget::addPolygonPoint(QPoint p)
 
 void ViewerWidget::drawPolygon(QColor color)
 {
-	if (polygonPoints.size() >= 2) {
-		QPoint lastPoint = polygonPoints.front(); //tu je 0-ty bod
-		for (size_t i = 1; i < polygonPoints.size(); i++) { //teda zacneme od 1.
-			drawLine(lastPoint, polygonPoints[i], color);
-			lastPoint = polygonPoints[i];
+	if (polygonPoints.size() < 2) return;
+
+	if (!polygonClosed) {
+		for (size_t i = 0; i < polygonPoints.size() - 1; i++) { //teda zacneme od 1.
+			drawLine(polygonPoints[i], polygonPoints[i + 1], color);
 		}
-		if (polygonClosed) {
-			drawLine(lastPoint, polygonPoints.front(), color);
+	} else {
+		std::vector<QPoint> pointsToDraw = clipSutherlandHodgman(this->polygonPoints);
+
+		if (pointsToDraw.size() >= 2) {
+			for (size_t i = 0; i < pointsToDraw.size(); i++) {
+				QPoint start = pointsToDraw[i];
+				QPoint end;
+
+				if (i == pointsToDraw.size() - 1) {
+					end = pointsToDraw[0];
+				}
+				else {
+					end = pointsToDraw[i + 1];
+				}
+				drawLine(start, end, color);
+			}
 		}
 	}
 	
 }
 
-std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle_deg) {
+std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle_deg, QPoint pivot) {
 	std::vector<QPoint> rotated;
-	QPoint pivot = points[0];
 	double angle_rad = angle_deg * (M_PI / 180.0);
 	double cosA = std::cos(angle_rad);
 	double sinA = std::sin(angle_rad);
 	for (QPoint point : points) {
-		int xnew = (point.x() - pivot.x()) * cosA - (point.y() - pivot.y()) * sinA + pivot.x();
-		int ynew = (point.x() - pivot.x()) * sinA + (point.y() - pivot.y()) * cosA + pivot.y();
-		rotated.push_back(QPoint(xnew, ynew));
+		double xnew = (point.x() - pivot.x()) * cosA - (point.y() - pivot.y()) * sinA + pivot.x();
+		double ynew = (point.x() - pivot.x()) * sinA + (point.y() - pivot.y()) * cosA + pivot.y();
+		rotated.push_back(QPoint(qRound(xnew), qRound(ynew)));
 	}
 	return rotated;
+}
+
+std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle) {
+	return rotate(points, angle, points[0]); 
 }
 
 
@@ -361,33 +379,35 @@ std::vector<QPoint> ViewerWidget::reflect(const std::vector<QPoint>& points, QPo
 
 QPoint ViewerWidget::intersection(QPoint S, QPoint V, int xmin)
 {
-	int Py = S.y() + ((xmin - S.x()) / (V.x() - S.x()))(V.y() - S.y()); //PRETYPOVANIE - necelociselne
-	QPoint P = QPoint(xmin, Py);
-	return P;
+	if (V.x() == S.x()) return QPoint(xmin, S.y());
+	double m = (double)(V.y() - S.y()) / (V.x() - S.x());
+	int Py = qRound(S.y() + m * (xmin - S.x()));
+	return QPoint(xmin, Py);
 }
 
-std::vector<QPoint> ViewerWidget::clipEdge(const std::vector<QPoint>& points, int xmin)
+std::vector<QPoint> ViewerWidget::clipEdgeSH(const std::vector<QPoint>& points, int xmin)
 {
 	std::vector<QPoint> W; //vrcholy orezaneho polygony, vrcholy orig - V - points
-	QPoint S = points.back();
-	for (const QPoint& Vi : points) {
-		if (Vi.x() >= xmin) {
-			if (S.x() >= xmin) {
-				W.push_back(Vi);
+	QPoint S = points.back(); //posledny vrchol points(V) - V_(n-1) 
+	//S je start bod iteracie - zaciatocny bod aktualne spracovavanej hranyS->Vi(su orientovane) (*teda vzdy prva srpacovavana hrana je medzi prvym a poslednym bodom z points)
+	for (const QPoint& Vi : points) { //Vi su koncove body hran S->Vi
+		if (Vi.x() >= xmin) { //koncovy je vnutri okna
+			if (S.x() >= xmin) { //aj zaciatocny je vnutri - obidva
+				W.push_back(Vi); //pridavame posledny do orezaneho polygona (S nepridavame kvoli duplikaciam, pridame kedy bude poslednym)
 			}
-			else {
-				QPoint Pi = intersection(S, Vi, xmin);
-				W.push_back(Pi);
+			else { //S je vonku, V vnutri - hrana vchadza v okno
+				QPoint Pi = intersection(S, Vi, xmin); //vypocitavame priesecnik i-tej hrany s oknom
+				W.push_back(Pi); //do vysledku pridame aj priesecmik, aj koncovy
 				W.push_back(Vi);
 			}
 		}
-		else {
-			if (S.x() >= xmin) {
+		else { //koncovy je vonku
+			if (S.x() >= xmin) { //ale zaciatocny vnutri - hrana vychadza s okna
 				QPoint Pi = intersection(S, Vi, xmin);
-				W.push_back(Pi);
+				W.push_back(Pi); //do vysledku ide vypocitany priesecnik (lebo zaciatocne nepridavame hned, pokial nedojdeme k nim ako koncovym))
 			}
 		}
-		S = Vi;
+		S = Vi; //posunieme na dalsiu hranu - aktualny koncovy sa stava zaciatocnym
 	}
 
 	return W;
@@ -395,7 +415,29 @@ std::vector<QPoint> ViewerWidget::clipEdge(const std::vector<QPoint>& points, in
 
 std::vector<QPoint> ViewerWidget::clipSutherlandHodgman(const std::vector<QPoint>& points)
 {
-	
+	std::vector<QPoint> clipped = points;
+	QPoint origin(0, 0);
+
+	////Orezanie LEFT (xmin=0)
+	//clipped = clipEdgeSH(clipped, 0);
+	//clipped = rotate(clipped, -90, origin);
+	////Orezanie TOP - otocime sa o 90 a orezeme podla xmin=0 stale
+	//clipped = clipEdgeSH(clipped, 0);
+	//clipped = rotate(clipped, -90, origin);
+	////Orezanie RIGHT (xmin=-(sirka_okna))
+	//clipped = clipEdgeSH(clipped, -(img->width()-1));
+	//clipped = rotate(clipped, -90, origin);
+	////Orezanie BOTTOM
+	//clipped = clipEdgeSH(clipped, -(img->height()-1));
+	//clipped = rotate(clipped, -90, origin);
+
+	int xmin[4] = {5,5,-(img->width() - 5),-(img->height() - 5)};
+	for (int i = 0; i < 4; i++) {
+		clipped = clipEdgeSH(clipped, xmin[i]);
+		clipped = rotate(clipped, -90, origin);
+	}
+
+	return clipped;
 }
 
 //Slots

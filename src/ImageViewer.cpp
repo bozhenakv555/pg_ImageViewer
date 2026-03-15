@@ -56,9 +56,9 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 	else if (event->type() == QEvent::Wheel) {
 		ViewerWidgetWheel(w, event);
 	}
-
 	return QObject::eventFilter(obj, event);
 }
+
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event); //pretypovanie vseobecneho QEvent na QMouseEvent
@@ -113,6 +113,8 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 		if (w->getdrawPolygonActivated()) { //klikame uz nie prvykrat
 			w->setPolygonClosed(false);
 			w->addPolygonPoint(e->pos()); 
+
+			w->clear();
 			w->drawPolygon(globalColor); //vykresli vsetko, co je v polygonPoints
 			w->update();
 		}
@@ -129,6 +131,8 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 	if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
 		if (w->getdrawPolygonActivated() && w->getPolygonPoints().size()>2) {
 			w->setPolygonClosed(true);
+
+			w->clear();
 			w->drawPolygon(globalColor); 
 			w->setDrawPolygonActivated(false);
 			w->update();

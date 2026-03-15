@@ -75,6 +75,7 @@ public:
 	QPoint getStartMousePos() { return startMousePos; }
 
 	//void scale(double factorx, double factory);
+	std::vector<QPoint> rotate(const std::vector<QPoint>& points, double angle_deg, QPoint pivot);
 	std::vector<QPoint> rotate(const std::vector<QPoint>& points, double angle);
 	std::vector<QPoint> scale(const std::vector<QPoint>& points, double factorx, double factory);
 	std::vector<QPoint> shear(const std::vector<QPoint>& points, double koefx);
@@ -82,7 +83,7 @@ public:
 
 	//orezanie
 	QPoint intersection(QPoint S, QPoint V, int xmin);
-	std::vector<QPoint> clipEdge(const std::vector<QPoint>& points, int xmin);
+	std::vector<QPoint> clipEdgeSH(const std::vector<QPoint>& points, int xmin);
 	std::vector<QPoint> clipSutherlandHodgman(const std::vector<QPoint>& points);
 
 public slots:
