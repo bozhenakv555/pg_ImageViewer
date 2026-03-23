@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>818</width>
-    <height>646</height>
+    <height>654</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,7 +26,7 @@
          <x>0</x>
          <y>0</y>
          <width>473</width>
-         <height>566</height>
+         <height>574</height>
         </rect>
        </property>
       </widget>
@@ -277,6 +277,22 @@
                <widget class="QToolButton" name="tbSymmetry">
                 <property name="text">
                  <string>Reflect</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item>
+            <widget class="QGroupBox" name="groupBox_10">
+             <property name="title">
+              <string/>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <item>
+               <widget class="QToolButton" name="tbFill">
+                <property name="text">
+                 <string>Fill Polygon</string>
                 </property>
                </widget>
               </item>

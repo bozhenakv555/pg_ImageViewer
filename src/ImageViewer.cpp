@@ -328,3 +328,10 @@ void ImageViewer::on_tbSymmetry_clicked()
 	vW->drawPolygon(globalColor);
 	vW->update();
 }
+
+void ImageViewer::on_tbFill_clicked()
+{
+	std::vector<QPoint> points = vW->getPolygonPoints();
+	vW->fillScanLine(points, globalColor);
+	vW->update();
+}

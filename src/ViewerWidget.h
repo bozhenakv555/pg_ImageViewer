@@ -88,6 +88,9 @@ public:
 
 	std::vector<QPoint> clipCyrusBeck(QPoint P1, QPoint P2);
 
+	//vyplnanie
+	void fillScanLine(std::vector<QPoint> points, QColor color);
+
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
 };

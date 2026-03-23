@@ -52,4 +52,5 @@ public slots:
 	void on_tbShear_clicked();
 	void on_tbRotate_clicked();
 	void on_tbSymmetry_clicked();
+	void on_tbFill_clicked();
 };

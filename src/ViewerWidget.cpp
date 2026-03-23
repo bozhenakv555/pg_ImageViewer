@@ -1,4 +1,5 @@
 #include   "ViewerWidget.h"
+#include <climits>)
 
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 	: QWidget(parent)
@@ -314,7 +315,6 @@ void ViewerWidget::drawPolygon(QColor color)
 			}
 		}
 	}
-	
 }
 
 std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle_deg, QPoint pivot) {
@@ -506,6 +506,110 @@ std::vector<QPoint> ViewerWidget::clipCyrusBeck(QPoint P1, QPoint P2) {
 	}
 
 	return newpoints;
+}
+
+void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
+{
+	if (points.size() < 3) return;
+
+	struct Edge { //sluzi na definiciu geimetrie
+		int y_z, y_k;
+		double x_z;
+		double w; // w = 1/m , m = delta_y/delta_x
+		bool operator<(const Edge& e) const {
+			return y_z < e.y_z;
+		}
+	};
+
+	//Priprava gran - asi je to ta tabulka
+	std::vector<Edge> edges;
+
+	int ymin = INT_MAX;
+	int ymax = INT_MIN;
+
+	for (int i = 0; i < points.size(); i++) {
+		QPoint z(points[i].x(), points[i].y());
+		QPoint k;
+		if (i == points.size() - 1) {
+			/*p_k.x() = points[0].x();
+			p_k.y() = points[0].y();*/
+			k = points[0];
+		}
+		else {
+			k = points[i+1];
+		}
+
+		if (z.y() == k.y()) continue; //vynechavanie vodorovnych hran
+		
+		if (k.y() < z.y()) std::swap(z,k); //zorientovanie
+
+		Edge e;
+		e.y_z = z.y();
+		e.y_k = k.y() - 1; //skratenie zdola
+		e.x_z = z.x();
+		e.w = (double)(k.x()-z.x())/(k.y()-z.y()); //ORIG M
+
+		edges.push_back(e);
+
+		//Hladanie extremov - budeme prechadzat od ymin do ymax - TH velkosti ymax-ymin
+		if (e.y_z < ymin) ymin = e.y_z;
+		if (k.y() > ymax) ymax = k.y(); //!!POVODNY KONIEC HRANY
+	}
+
+	//Zoradenie hran
+	std::sort(edges.begin(), edges.end());
+
+	struct scanlineEdge { //sluzi na vykreslovanie(rasterizaciu) :)
+		int dy; //pocet riadkov do ktorych hrana zasahuje
+		double x; //aktualny suradnice priesecniku s rozkladovym riadkom - kde hrana pretina riadok
+		double w; //prirastok x pri prechodu na dalsi riadok - o kolko sa posunie
+	};
+
+	std::vector<QList<scanlineEdge>> TH;
+	TH.resize(ymax - ymin + 1);
+	for (int i = 0; i < edges.size(); i++) {
+		scanlineEdge se;
+		se.dy = edges[i].y_k - edges[i].y_z + 1;
+		se.x = edges[i].x_z;
+		se.w = edges[i].w;
+
+		TH[edges[i].y_z - ymin].push_back(se);
+	}
+
+	QList<scanlineEdge> ZAH;
+	int y = ymin;
+
+	for (int i = 0; i < TH.size(); i++) {
+		if (!TH[i].isEmpty()) {
+			for (const scanlineEdge& edge : TH[i]) {
+				ZAH.push_back(edge);
+			}
+		}
+		std::sort(ZAH.begin(), ZAH.end(), [](const scanlineEdge& a, const scanlineEdge& b) {
+			return a.x < b.x;
+		});
+		for (int j = 0; j < ZAH.size()-1; j += 2) { //po dvojiciach - krok 2
+			int x_start = std::ceil(ZAH[j].x);    
+			int x_end = std::floor(ZAH[j + 1].x); 
+
+			if (x_start <= x_end) {
+				for (int x = x_start; x <= x_end; x++) {
+					setPixel(x, y, color);
+				}
+			}
+		}
+		for (int j = 0; j < ZAH.size(); ) {
+			ZAH[j].dy--;
+			if (ZAH[j].dy < 0) {
+				ZAH.removeAt(j);
+			}
+			else {
+				ZAH[j].x += ZAH[j].w;
+				j++;
+			}
+		}
+		y++;
+	}
 }
 
 //Slots
