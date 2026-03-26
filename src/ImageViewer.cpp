@@ -67,75 +67,109 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 		w->setStartMousePos(e->pos()); //ulozime pociatocnu polohu mysi pre vypocet posunu (SHIFT)
 	}
 
-	//LINE
-	if (e->button() == Qt::LeftButton && ui->toolButtonDrawLine->isChecked())
+	//LINE 
+	if (ui->toolButtonDrawLine->isChecked())
 	{
-		if (w->getDrawLineActivated()) { //ciaru kreslime iba ak mame aktivovane jej kreslenie
-			w->drawLine(w->getDrawLineBegin(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
-			
-			w->clearPolygonPoints(); //vymazeme predchadzajuci objekt (podla zadania len jeden objekt naraz)
-			w->addPolygonPoint(w->getDrawLineBegin());
-			w->addPolygonPoint(e->pos()); //ulozime body usecky do zoznamu bodov (ako 2-bodovy polygon)
-			w->setPolygonClosed(false); //usecka nie je uzavrety tvar
-			
-			w->setDrawLineActivated(false);
-		}
-		else {
-			w->clear(); // +!
-			w->clearPolygonPoints(); 
+		if (e->button() == Qt::LeftButton) {
+			if (w->getDrawLineActivated()) { //ciaru kreslime iba ak mame aktivovane jej kreslenie
+				w->drawLine(w->getDrawLineBegin(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
 
-			w->setDrawLineBegin(e->pos()); //volame funkciu vw a tam posielame objekt typu QPoint (uchovava int suradnice, ale QPointF float suradnice)
-			w->setDrawLineActivated(true);
-			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
-			w->update(); //sa vyvola paintEvent - prekresli obrazok
+				w->clearPolygonPoints(); //vymazeme predchadzajuci objekt (podla zadania len jeden objekt naraz)
+				w->addPolygonPoint(w->getDrawLineBegin());
+				w->addPolygonPoint(e->pos()); //ulozime body usecky do zoznamu bodov (ako 2-bodovy polygon)
+				w->setPolygonClosed(false); //usecka nie je uzavrety tvar
+
+				w->setDrawLineActivated(false);
+			}
+			else {
+				w->clear(); //+!
+				w->clearPolygonPoints();
+
+				w->setDrawLineBegin(e->pos()); //volame funkciu vw a tam posielame objekt typu QPoint (uchovava int suradnice, ale QPointF float suradnice)
+				w->setDrawLineActivated(true);
+				w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+				w->update(); //sa vyvola paintEvent - prekresli obrazok
+			}
 		}
 	}
-	//CIRCLE
-	if (e->button() == Qt::LeftButton && ui->toolButtonDrawCircle->isChecked())
+	//CIRCLE 
+	else if (ui->toolButtonDrawCircle->isChecked())
 	{
-		if (w->getDrawCircleActivated()) {
-			w->drawCircleBresenham(w->getDrawCircleBegin(), e->pos(), globalColor);
-			w->setDrawCircleActivated(false);
-		}
-		else {
-			w->clear(); // +!
-			w->clearPolygonPoints();
+		if (e->button() == Qt::LeftButton) {
+			if (w->getDrawCircleActivated()) {
+				w->drawCircleBresenham(w->getDrawCircleBegin(), e->pos(), globalColor);
+				w->setDrawCircleActivated(false);
+			}
+			else {
+				w->clear(); //+!
+				w->clearPolygonPoints();
 
-			w->setDrawCircleBegin(e->pos()); 
-			w->setDrawCircleActivated(true);
-			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
-			w->update(); 
+				w->setDrawCircleBegin(e->pos());
+				w->setDrawCircleActivated(true);
+				w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+				w->update();
+			}
 		}
 	}
 	//POLYGON
-	if (e->button() == Qt::LeftButton && ui->toolButtonDrawPolygon->isChecked())
+	else if (ui->toolButtonDrawPolygon->isChecked())
 	{
-		if (w->getdrawPolygonActivated()) { //klikame uz nie prvykrat
-			w->setPolygonClosed(false);
-			w->addPolygonPoint(e->pos()); 
+		if (e->button() == Qt::LeftButton) {
+			if (w->getdrawPolygonActivated()) { //klikame uz nie prvykrat
+				w->setPolygonClosed(false);
+				w->addPolygonPoint(e->pos());
 
-			w->clear();
-			w->drawPolygon(globalColor); //vykresli vsetko, co je v polygonPoints
-			w->update();
+				w->clear();
+				w->drawPolygon(globalColor); //vykresli vsetko, co je v polygonPoints
+				w->update();
+			}
+			else {
+				w->clear();
+				w->clearPolygonPoints();
+				w->setDrawPolygonActivated(true);
+				w->setPolygonClosed(false);
+				w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+				w->addPolygonPoint(e->pos());
+				w->update();
+			}
 		}
-		else {
-			w->clear();
-			w->clearPolygonPoints(); 
-			w->setDrawPolygonActivated(true); 
-			w->setPolygonClosed(false); 
-			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
-			w->addPolygonPoint(e->pos());
-			w->update();
+		else if (e->button() == Qt::RightButton) {
+			if (w->getdrawPolygonActivated() && w->getPolygonPoints().size() > 2) {
+				w->setPolygonClosed(true);
+
+				w->clear();
+				w->drawPolygon(globalColor);
+				w->setDrawPolygonActivated(false);
+				w->update();
+			}
 		}
 	}
-	if (e->button() == Qt::RightButton && ui->toolButtonDrawPolygon->isChecked()) {
-		if (w->getdrawPolygonActivated() && w->getPolygonPoints().size()>2) {
-			w->setPolygonClosed(true);
+	//CURVE - hermite
+	else if (ui->toolButtonHermite->isChecked()) {
+		//lavym tlacidlom len pridavame body
+		if (e->button() == Qt::LeftButton) {
 
-			w->clear();
-			w->drawPolygon(globalColor); 
-			w->setDrawPolygonActivated(false);
+			if (hermiteVectorAngles.empty()) {
+				w->clearPolygonPoints();
+			}
+
+			w->addHermitePoint(e->pos());
+			hermiteVectorAngles.push_back(0.0); //nainizializujeme pre bod uhol
+
+			//vykreslime bod
+			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
 			w->update();
+
+			//aktualizujeme spinbox pre indexy
+			ui->sbPointIndex->setMaximum(w->getHermitePoints().size());
+		}
+		//prave tlacidlo - vykreslime samotnu krivku
+		else if (e->button() == Qt::RightButton) {
+			if (w->getHermitePoints().size() >= 2) {
+				w->clear();
+				w->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor);
+				w->update();
+			}
 		}
 	}
 }
@@ -143,11 +177,12 @@ void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 }
+
 void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 	//SHIFT
-	if ((e->buttons() == Qt::LeftButton) && !ui->toolButtonDrawLine->isChecked() && !ui->toolButtonDrawPolygon->isChecked() && !ui->toolButtonDrawCircle->isChecked()) {
+	if ((e->buttons() == Qt::LeftButton) && !ui->toolButtonDrawLine->isChecked() && !ui->toolButtonDrawPolygon->isChecked() && !ui->toolButtonDrawCircle->isChecked() && !ui->toolButtonHermite->isChecked()) {
 		QPoint delta = e->pos() - w->getStartMousePos();
 		std::vector<QPoint> points = w->getPolygonPoints();
 
@@ -414,4 +449,29 @@ void ImageViewer::on_pbT2Color_clicked()
 			.arg(colorT2.name(QColor::HexRgb));
 		ui->pbT2Color->setStyleSheet(style);
 	}
+}
+
+void ImageViewer::on_sbPointIndex_valueChanged(int i) {
+	currentPointIndex = i - 1; // -1, lebo v UI zaciname od 1, ale v array od 0
+
+	if (currentPointIndex >= 0 && currentPointIndex < hermiteVectorAngles.size()) {
+		double angleDegrees = hermiteVectorAngles[currentPointIndex] * (180.0 / M_PI);
+		ui->dsbVectorAngle->setValue(angleDegrees);
+	}
+}
+
+void ImageViewer::on_dsbVectorAngle_valueChanged(double value) {
+	if (currentPointIndex >= 0 && currentPointIndex < hermiteVectorAngles.size()) {
+		hermiteVectorAngles[currentPointIndex] = value * (M_PI / 180.0); //prevod na radiany 
+		vW->clear();
+		vW->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor);
+		vW->update();
+	}
+}
+
+void ImageViewer::on_dsbVectorLength_valueChanged(double value) {
+	hermiteVectorLength = value;
+	vW->clear();
+	vW->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor);
+	vW->update();
 }

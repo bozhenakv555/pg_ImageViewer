@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>818</width>
-    <height>739</height>
+    <height>797</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,8 +25,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>397</width>
-         <height>659</height>
+         <width>314</width>
+         <height>717</height>
         </rect>
        </property>
       </widget>
@@ -301,21 +301,21 @@
               <item>
                <widget class="QPushButton" name="pbT0Color">
                 <property name="text">
-                 <string>PushButton</string>
+                 <string>T0 color</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QPushButton" name="pbT1Color">
                 <property name="text">
-                 <string>PushButton</string>
+                 <string>T1 color</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QPushButton" name="pbT2Color">
                 <property name="text">
-                 <string>PushButton</string>
+                 <string>T2 color</string>
                 </property>
                </widget>
               </item>
@@ -358,6 +358,55 @@
                <widget class="QToolButton" name="tbFill">
                 <property name="text">
                  <string>Fill Polygon</string>
+                </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QGroupBox" name="groupBox_13">
+             <property name="title">
+              <string/>
+             </property>
+             <layout class="QGridLayout" name="gridLayout_3">
+              <item row="0" column="3">
+               <widget class="QDoubleSpinBox" name="dsbVectorAngle">
+                <property name="minimum">
+                 <double>-360.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>360.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QSpinBox" name="sbPointIndex"/>
+              </item>
+              <item row="0" column="4">
+               <widget class="QDoubleSpinBox" name="dsbVectorLength">
+                <property name="minimum">
+                 <double>100.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>450.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QLabel" name="label_5">
+                <property name="text">
+                 <string>point, angle, length</string>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QToolButton" name="toolButtonHermite">
+                <property name="text">
+                 <string>Hermite Curve</string>
                 </property>
                 <property name="checkable">
                  <bool>true</bool>

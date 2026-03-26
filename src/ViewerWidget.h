@@ -30,6 +30,9 @@ private:
 	bool fillEnabled = false; 
 	int currentFillType = 0;
 
+	std::vector<QPoint> hermitePoints;
+	std::vector<QPoint> bezierPoints;
+
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
 	~ViewerWidget();
@@ -119,6 +122,16 @@ public:
 	}
 	void setFillEnabled(bool enabled) { fillEnabled = enabled; }
 	void setFillType(int type) { currentFillType = type; }
+
+	//krivky
+	//hermite
+	void drawHermiteCurve(const std::vector<double>& angles, double length, QColor color);
+	void addHermitePoint(QPoint p) { hermitePoints.push_back(p); }
+	void clearHermitePoints() { hermitePoints.clear(); }
+	std::vector<QPoint>& getHermitePoints() { return hermitePoints; }
+
+	void drawBezierCurve(QColor color, int NSegments = 100);
+	void addBezierPoint(QPoint p) { bezierPoints.push_back(p);  };
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

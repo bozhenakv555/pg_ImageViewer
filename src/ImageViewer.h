@@ -24,6 +24,10 @@ private:
 	QColor colorT1 = Qt::green;
 	QColor colorT2 = Qt::blue;
 
+	std::vector<double> hermiteVectorAngles; 
+	double hermiteVectorLength = 150.0; 
+	int currentPointIndex = 0;
+
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);
 
@@ -56,8 +60,13 @@ public slots:
 	void on_tbShear_clicked();
 	void on_tbRotate_clicked();
 	void on_tbSymmetry_clicked();
+
 	void on_tbFill_clicked();
 	void on_pbT0Color_clicked();
 	void on_pbT1Color_clicked();
 	void on_pbT2Color_clicked();
+
+	void on_dsbVectorAngle_valueChanged(double value);
+	void on_dsbVectorLength_valueChanged(double value);
+	void on_sbPointIndex_valueChanged(int i);
 };

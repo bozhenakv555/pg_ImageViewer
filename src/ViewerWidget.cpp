@@ -1,6 +1,8 @@
 #include   "ViewerWidget.h"
 #include <climits>
 
+#include <QtGlobal> //pre qRound
+
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 	: QWidget(parent)
 {
@@ -152,11 +154,12 @@ void ViewerWidget::clear()
 
 void ViewerWidget::clearAll()
 {
-	polygonPoints.clear();      // vymazeme zoznam bodov objektu
-	polygonClosed = false;      // resetneme stav uzavretia
-	fillEnabled = false;        // vypneme vypln
-	drawPolygonActivated = false; // vypneme rezim kreslenia
-	clear();                    // vymazeme samotne biele platno (img->fill)
+	polygonPoints.clear(); //vymazeme zoznam bodov polygona
+	hermitePoints.clear(); //aj krivky
+	polygonClosed = false; //resetneme stav uzavretia
+	fillEnabled = false; //vypneme vypln
+	drawPolygonActivated = false; //vypneme rezim kreslenia
+	clear(); //vymazeme samotne biele platno (img->fill)
 }
 
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
@@ -809,6 +812,102 @@ QColor ViewerWidget::getColor(int x, int y, int fillType) {
 
 }
 
+void ViewerWidget::drawHermiteCurve(const std::vector<double>& angles, double length, QColor color)
+{
+	if (hermitePoints.size() < 2) return;
+
+	double N = 100.0;
+	double dt = 1.0 / N;
+	double t;
+
+	for (size_t i = 1; i < hermitePoints.size(); i++) {
+		QPoint Pi_minus = hermitePoints[i - 1];
+		QPoint Pi = hermitePoints[i];
+
+		QPointF Pi_minus_dot(cos(angles[i - 1]) * length, sin(angles[i - 1]) * length);
+		QPointF Pi_dot(cos(angles[i]) * length, sin(angles[i]) * length);
+
+		QPoint Q0(Pi_minus.x(), Pi_minus.y());
+		t = dt;
+
+		while (t < 1.0) {
+			double t2 = t * t;
+			double t3 = t2 * t;
+
+			//Hermitovske polynomy
+			double F0 = 2.0 * t3 - 3.0 * t2 + 1.0;
+			double F1 = -2.0 * t3 + 3.0 * t2;
+			double F2 = t3 - 2.0 * t2 + t;
+			double F3 = t3 - t2;
+
+			double q1x = Pi_minus.x() * F0 + Pi.x() * F1 + Pi_minus_dot.x() * F2 + Pi_dot.x() * F3;
+			double q1y = Pi_minus.y() * F0 + Pi.y() * F1 + Pi_minus_dot.y() * F2 + Pi_dot.y() * F3;
+
+			QPoint Q1(qRound(q1x), qRound(q1y));
+
+			drawLineBresenham(Q0, Q1, color);
+
+			Q0 = Q1;
+			t += dt;
+		}
+
+		drawLineBresenham(Q0, Pi, color);
+
+		drawLineBresenham(Pi_minus, QPoint(Pi_minus.x() + qRound(Pi_minus_dot.x()),
+			Pi_minus.y() + qRound(Pi_minus_dot.y())), Qt::red);
+
+		if (i == hermitePoints.size() - 1) {
+			drawLineBresenham(Pi, QPoint(Pi.x() + qRound(Pi_dot.x()),
+				Pi.y() + qRound(Pi_dot.y())), Qt::red);
+		}
+	}
+}
+
+void ViewerWidget::drawBezierCurve(QColor color, int NSegments)
+{
+	if (bezierPoints.size() < 2) return;
+
+	int n = bezierPoints.size(); 
+	double dt = 1.0 / NSegments;
+
+	QPointF Q0 = bezierPoints[0];
+
+	for (double t = dt; t < 1.0; t += dt) {
+
+		std::vector<std::vector<QPointF>> P(n);
+		for (int i = 0; i < n; i++) {
+			P[i].resize(n - i);
+		}
+		for (int j = 0; j < n; j++) {
+			P[0][j] = bezierPoints[j];
+		}
+		for (int i = 1; i < n; i++) {
+			for (int j = 0; j < n - i; j++) {
+				//key vzorec: P[i,j] = (1 - t) * P[i-1,j] + t * P[i-1,j+1]
+				P[i][j].setX((1.0 - t) * P[i - 1][j].x() + t * P[i - 1][j + 1].x());
+				P[i][j].setY((1.0 - t) * P[i - 1][j].y() + t * P[i - 1][j + 1].y());
+			}
+		}
+		QPointF Q1 = P[n - 1][0];
+		drawLine(QPoint(qRound(Q0.x()), qRound(Q0.y())),
+			QPoint(qRound(Q1.x()), qRound(Q1.y())), color);
+
+		Q0 = Q1;
+	}
+
+	QPointF lastPoint = bezierPoints[n - 1];
+	drawLine(QPoint(qRound(Q0.x()), qRound(Q0.y())),
+		QPoint(qRound(lastPoint.x()), qRound(lastPoint.y())), color);
+
+	for (int i = 0; i < n; i++) {
+		QPoint p = bezierPoints[i];
+		for (int dx = -2; dx <= 2; dx++) {
+			for (int dy = -2; dy <= 2; dy++) {
+				setPixel(p.x() + dx, p.y() + dy, Qt::red); 
+			}
+		}
+	}
+}
 
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
