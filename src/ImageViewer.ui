@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>818</width>
-    <height>654</height>
+    <height>739</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,8 +25,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>473</width>
-         <height>574</height>
+         <width>397</width>
+         <height>659</height>
         </rect>
        </property>
       </widget>
@@ -101,6 +101,38 @@
         <string>Draw</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
+        <item row="2" column="0">
+         <widget class="QGroupBox" name="groupBox_4">
+          <property name="title">
+           <string/>
+          </property>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QToolButton" name="toolButtonDrawPolygon">
+             <property name="text">
+              <string>Polygon</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="popupMode">
+              <enum>QToolButton::ToolButtonPopupMode::DelayedPopup</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QToolButton" name="toolButtonDrawCircle">
+             <property name="text">
+              <string>Circle</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
         <item row="1" column="0">
          <widget class="QGroupBox" name="groupBox_3">
           <property name="title">
@@ -125,38 +157,6 @@
             <widget class="QToolButton" name="toolButtonDrawLine">
              <property name="text">
               <string>Line</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </item>
-        <item row="2" column="0">
-         <widget class="QGroupBox" name="groupBox_4">
-          <property name="title">
-           <string/>
-          </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QToolButton" name="toolButtonDrawPolygon">
-             <property name="text">
-              <string>Polygon</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
-             <property name="popupMode">
-              <enum>QToolButton::ToolButtonPopupMode::DelayedPopup</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="toolButtonDrawCircle">
-             <property name="text">
-              <string>Circle</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -283,12 +283,77 @@
              </layout>
             </widget>
            </item>
-           <item>
-            <widget class="QGroupBox" name="groupBox_10">
+          </layout>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QGroupBox" name="groupBox_10">
+          <property name="title">
+           <string/>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_2">
+           <item row="1" column="0">
+            <widget class="QGroupBox" name="groupBox_11">
              <property name="title">
               <string/>
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <item>
+               <widget class="QPushButton" name="pbT0Color">
+                <property name="text">
+                 <string>PushButton</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pbT1Color">
+                <property name="text">
+                 <string>PushButton</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pbT2Color">
+                <property name="text">
+                 <string>PushButton</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QGroupBox" name="groupBox_12">
+             <property name="title">
+              <string/>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_9">
+              <item>
+               <widget class="QLabel" name="label_4">
+                <property name="text">
+                 <string>Triangle Fill Type</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="cbFillType">
+                <item>
+                 <property name="text">
+                  <string>Solid</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Nearest Neighboor</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Baycentric</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
               <item>
                <widget class="QToolButton" name="tbFill">
                 <property name="text">

@@ -20,6 +20,10 @@ private:
 	QSettings settings;
 	QMessageBox msgBox;
 
+	QColor colorT0 = Qt::red;
+	QColor colorT1 = Qt::green;
+	QColor colorT2 = Qt::blue;
+
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);
 
@@ -53,4 +57,7 @@ public slots:
 	void on_tbRotate_clicked();
 	void on_tbSymmetry_clicked();
 	void on_tbFill_clicked();
+	void on_pbT0Color_clicked();
+	void on_pbT1Color_clicked();
+	void on_pbT2Color_clicked();
 };

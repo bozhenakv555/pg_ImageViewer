@@ -1,5 +1,11 @@
 #pragma once
 #include <QtWidgets>
+
+struct Vertex {
+	QPoint pos;
+	QColor color;
+};
+
 class ViewerWidget :public QWidget {
 	Q_OBJECT
 
@@ -18,6 +24,8 @@ private:
 	std::vector<QPoint> polygonPoints;
 	bool polygonClosed = false;
 	QPoint startMousePos;
+
+	Vertex base_t0, base_t1, base_t2;
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -90,6 +98,14 @@ public:
 
 	//vyplnanie
 	void fillScanLine(std::vector<QPoint> points, QColor color);
+
+	void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+	void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+	void fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+	double getTriangleArea(QPoint t0, QPoint t1, QPoint t2);
+	QColor  getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
+	QColor getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
+	QColor getColor(int x, int y, int fillType);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

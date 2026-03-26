@@ -1,5 +1,5 @@
 #include   "ViewerWidget.h"
-#include <climits>)
+#include <climits>
 
 ViewerWidget::ViewerWidget(QSize imgSize, QWidget* parent)
 	: QWidget(parent)
@@ -512,10 +512,10 @@ void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
 {
 	if (points.size() < 3) return;
 
-	struct Edge { //sluzi na definiciu geimetrie
-		int y_z, y_k;
-		double x_z;
-		double w; // w = 1/m , m = delta_y/delta_x
+	struct Edge { //sluzi na definiciu geometrie hrany polygpnu
+		int y_z, y_k; //y_z = horny koniec hrany, y_k = dolny koniec hrany 
+		int x_z; // x suradnica horneho konca hrany
+		double w; // w = 1/m , m = delta_y/delta_x; prirastok x pri posune o jeden riadok
 		bool operator<(const Edge& e) const {
 			return y_z < e.y_z;
 		}
@@ -553,7 +553,7 @@ void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
 
 		//Hladanie extremov - budeme prechadzat od ymin do ymax - TH velkosti ymax-ymin
 		if (e.y_z < ymin) ymin = e.y_z;
-		if (k.y() > ymax) ymax = k.y(); //!!POVODNY KONIEC HRANY
+		if (e.y_k > ymax) ymax = e.y_k;
 	}
 
 	//Zoradenie hran
@@ -569,11 +569,11 @@ void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
 	TH.resize(ymax - ymin + 1);
 	for (int i = 0; i < edges.size(); i++) {
 		scanlineEdge se;
-		se.dy = edges[i].y_k - edges[i].y_z + 1;
+		se.dy = edges[i].y_k - edges[i].y_z;
 		se.x = edges[i].x_z;
 		se.w = edges[i].w;
 
-		TH[edges[i].y_z - ymin].push_back(se);
+		TH[edges[i].y_z - ymin].append(se); //ulozenie hrany do tabulky TH pod index, ktory zacina od 0 pre ymin, aby sme mohli prechadzat riadky od 0 po TH.size()-1
 	}
 
 	QList<scanlineEdge> ZAH;
@@ -588,7 +588,7 @@ void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
 		std::sort(ZAH.begin(), ZAH.end(), [](const scanlineEdge& a, const scanlineEdge& b) {
 			return a.x < b.x;
 		});
-		for (int j = 0; j < ZAH.size()-1; j += 2) { //po dvojiciach - krok 2
+		for (int j = 0; j+1 < ZAH.size(); j += 2) { //po dvojiciach - krok 2
 			int x_start = std::ceil(ZAH[j].x);    
 			int x_end = std::floor(ZAH[j + 1].x); 
 
@@ -599,18 +599,190 @@ void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
 			}
 		}
 		for (int j = 0; j < ZAH.size(); ) {
-			ZAH[j].dy--;
-			if (ZAH[j].dy < 0) {
+			if (ZAH[j].dy <= 0) {
 				ZAH.removeAt(j);
 			}
 			else {
 				ZAH[j].x += ZAH[j].w;
+				ZAH[j].dy--;
 				j++;
 			}
 		}
 		y++;
 	}
 }
+
+void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType) {
+	base_t0 = t0;
+	base_t1 = t1;
+	base_t2 = t2;
+	
+	std::vector<Vertex> points = { t0, t1, t2 };
+
+	std::sort(points.begin(), points.end(), [](const Vertex& a, const Vertex& b) {
+		if (a.pos.y() != b.pos.y()) { //ak y sa nerovnaju - teda mozme ich porovnavat <>
+			return a.pos.y() < b.pos.y(); //tak primarne usporiadame podla y
+		}
+		else { //ak nemozme rozhodnut, ako usporiadat podla y, pretoze sa rovnaju
+			return a.pos.x() < b.pos.x(); //sekindarne podla x
+		}
+	});
+
+	t0 = points[0];
+	t1 = points[1];
+	t2 = points[2];
+
+	if (t0.pos.y() == t1.pos.y()) {
+		//pripad: vodorovna horna hrana
+		fillBottomTriangle(t0, t1, t2, fillType);
+	}
+	else if (t1.pos.y() == t2.pos.y()) {
+		//pripad: vodorovna spodna hrana
+		fillTopTriangle(t0, t1, t2, fillType);
+	}
+	else {
+		QPoint pos_p;
+		pos_p = QPoint((t0.pos.x()+(t1.pos.y()- t0.pos.y())*((double)(t2.pos.x()- t0.pos.x())/(t2.pos.y() - t0.pos.y()))), t1.pos.y());
+		Vertex p = {pos_p, t1.color};
+
+		if (t1.pos.x() < p.pos.x()) {
+			fillTopTriangle(t0, t1, p, fillType);
+			fillBottomTriangle(t1, p, t2, fillType);
+		}
+		else {
+			fillTopTriangle(t0, p, t1, fillType);
+			fillBottomTriangle(p, t1, t2, fillType);
+		}
+	}
+}
+
+void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
+{
+	double w1 = (double)(t2.pos.x() - t0.pos.x()) / (t2.pos.y() - t0.pos.y());
+	double w2 = (double)(t2.pos.x() - t1.pos.x()) / (t2.pos.y() - t1.pos.y());
+
+	double x1 = t0.pos.x();
+	double x2 = t1.pos.x();
+
+	int y1 = t0.pos.y();
+	int y2 = t2.pos.y();
+
+
+	for (int y = y1; y <= y2; y++) {
+		int startX = std::min((int)x1, (int)x2);
+		int endX = std::max((int)x1, (int)x2);
+
+		for (int x = startX; x <= endX; x++) {
+			setPixel(x, y, getColor(x, y, fillType));
+		}
+
+		x1 += w1;
+		x2 += w2;
+	}
+}
+
+void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
+{
+	//hrany idu zhora nadol: e1 spaja t0-t1, e2 spaja t0-t2
+	double w1 = (double)(t1.pos.x() - t0.pos.x()) / (t1.pos.y() - t0.pos.y());
+	double w2 = (double)(t2.pos.x() - t0.pos.x()) / (t2.pos.y() - t0.pos.y());
+
+	//zaciname na vrchole t0
+	double x1 = t0.pos.x();
+	double x2 = t0.pos.x();
+
+	int y1 = t0.pos.y();
+	int y2 = t1.pos.y();
+
+	//ideme riadok po riadku od hornej (t0.y) az po spodnu hranu (t1.y)
+	for (int y = y1; y <= y2; y++) {
+		//vykreslime vodorovnu usecku medzi x1 a x2
+		int startX = std::min((int)x1, (int)x2);
+		int endX = std::max((int)x1, (int)x2);
+
+
+		for (int x = startX; x <= endX; x++) {
+			setPixel(x, y, getColor(x, y, fillType));
+		}
+
+		// posun x suradnic pre dalsi riadok 
+		x1 += w1;
+		x2 += w2;
+	}
+}
+
+QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
+{
+	// vzdialenosti od pixelu k jednotlivym vrcholom
+	int d0 = (x - t0.pos.x()) * (x - t0.pos.x()) +
+		(y - t0.pos.y()) * (y - t0.pos.y());
+
+	int d1 = (x - t1.pos.x()) * (x - t1.pos.x()) +
+		(y - t1.pos.y()) * (y - t1.pos.y());
+
+	int d2 = (x - t2.pos.x()) * (x - t2.pos.x()) +
+		(y - t2.pos.y()) * (y - t2.pos.y());
+
+	// vyberieme farbu najblizsieho vrcholu
+	if (d0 <= d1 && d0 <= d2) {
+		return t0.color;
+	}
+	else if (d1 <= d0 && d1 <= d2) {
+		return t1.color;
+	}
+	else {
+		return t2.color;
+	}
+}
+
+QColor ViewerWidget::getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
+{
+	// celkova plocha trojuholnika T0,T1,T2
+	double A = abs((t1.pos.x() - t0.pos.x()) * (t2.pos.y() - t0.pos.y()) -
+		(t1.pos.y() - t0.pos.y()) * (t2.pos.x() - t0.pos.x())) / 2;
+
+	// plochy podtrojuholnikov s bodom P(x,y)
+	double A0 = abs((t1.pos.x() - x) * (t2.pos.y() - y) -
+		(t1.pos.y() - y) * (t2.pos.x() - x)) / 2;
+
+	double A1 = abs((t0.pos.x() - x) * (t2.pos.y() - y) -
+		(t0.pos.y() - y) * (t2.pos.x() - x)) / 2;
+
+	double A2 = A - A0 - A1; // tretia plocha (aby sme nemuseli pocitat znova)
+
+	// vahy (barycentricke suradnice)
+	double l0 = A0 / A;
+	double l1 = A1 / A;
+	double l2 = A2 / A;
+
+	// interpolacia farby
+	int r = (int)(l0 * t0.color.red() + l1 * t1.color.red() + l2 * t2.color.red());
+	int g = (int)(l0 * t0.color.green() + l1 * t1.color.green() + l2 * t2.color.green());
+	int b = (int)(l0 * t0.color.blue() + l1 * t1.color.blue() + l2 * t2.color.blue());
+
+	// orezanie na rozsah 0–255
+	r = qBound(0, r, 255);
+	g = qBound(0, g, 255);
+	b = qBound(0, b, 255);
+
+	return QColor(r, g, b);
+}
+
+QColor ViewerWidget::getColor(int x, int y, int fillType) {
+	QColor color;
+	if (fillType == 0) {
+		color = base_t0.color; 
+	}
+	else if (fillType == 1) {
+		color = getNearestColor(x, y, base_t0, base_t1, base_t2);
+	}
+	else {
+		color = getBarycentricColor(x, y, base_t0, base_t1, base_t2);
+	}
+	return color;
+
+}
+
 
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)

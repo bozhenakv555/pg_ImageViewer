@@ -329,9 +329,61 @@ void ImageViewer::on_tbSymmetry_clicked()
 	vW->update();
 }
 
-void ImageViewer::on_tbFill_clicked()
-{
+void ImageViewer::on_tbFill_clicked() {
 	std::vector<QPoint> points = vW->getPolygonPoints();
-	vW->fillScanLine(points, globalColor);
+
+	if (points.size() == 3) {
+		Vertex t0 = { points[0], colorT0 };
+		Vertex t1 = { points[1], colorT1 };
+		Vertex t2 = { points[2], colorT2 };
+
+		int fillType = ui->cbFillType->currentIndex();
+
+		vW->fillTriangle(t0, t1, t2, fillType);
+	}
+	else if (points.size() > 3) {
+		vW->fillScanLine(points, globalColor);
+	}
+
 	vW->update();
+}
+
+
+void ImageViewer::on_pbT0Color_clicked()
+{
+	QColor newColor = QColorDialog::getColor(colorT0, this);
+
+	if (newColor.isValid()) {
+		colorT0 = newColor;
+
+		QString style = QString("background-color: %1;")
+			.arg(colorT0.name(QColor::HexRgb));
+		ui->pbT0Color->setStyleSheet(style);
+	}
+}
+
+void ImageViewer::on_pbT1Color_clicked()
+{
+	QColor newColor = QColorDialog::getColor(colorT1, this);
+
+	if (newColor.isValid()) {
+		colorT1 = newColor;
+
+		QString style = QString("background-color: %1;")
+			.arg(colorT1.name(QColor::HexRgb));
+		ui->pbT1Color->setStyleSheet(style);
+	}
+}
+
+void ImageViewer::on_pbT2Color_clicked()
+{
+	QColor newColor = QColorDialog::getColor(colorT2, this);
+
+	if (newColor.isValid()) {
+		colorT2 = newColor;
+
+		QString style = QString("background-color: %1;")
+			.arg(colorT2.name(QColor::HexRgb));
+		ui->pbT2Color->setStyleSheet(style);
+	}
 }
