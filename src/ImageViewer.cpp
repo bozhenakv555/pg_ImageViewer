@@ -156,6 +156,11 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 		}
 
 		w->setPolygonPoints(points); //ulozime transformovane body spat
+
+		if (points.size() == 3) {
+			w->setTriangleVertices({ points[0], colorT0 }, { points[1], colorT1 }, { points[2], colorT2 });
+		}
+
 		w->setStartMousePos(e->pos()); //vktualizujeme polohu mysi pre plynuly pohyb v dalsom kroku
 
 		w->clear(); //vymazeme stare platno
@@ -180,8 +185,12 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 	std::vector<QPoint> scaled = w->scale(original, factor, factor);
 	w->setPolygonPoints(scaled);
 
+	if (scaled.size() == 3) {
+		w->setTriangleVertices({ scaled[0], colorT0 }, { scaled[1], colorT1 }, { scaled[2], colorT2 });
+	}
+
 	w->clear();
-	w->drawPolygon(globalColor); 
+	w->drawPolygon(globalColor);
 	w->update();
 }
 
@@ -256,7 +265,7 @@ void ImageViewer::on_actionSave_as_triggered()
 }
 void ImageViewer::on_actionClear_triggered()
 {
-	vW->clear();
+	vW->clearAll();
 }
 void ImageViewer::on_actionExit_triggered()
 {
@@ -282,6 +291,10 @@ void ImageViewer::on_tbScale_clicked()
 	std::vector<QPoint> scaled = vW->scale(original, factorx, factory);
 	vW->setPolygonPoints(scaled);
 
+	if (scaled.size() == 3) {
+		vW->setTriangleVertices({ scaled[0], colorT0 }, { scaled[1], colorT1 }, { scaled[2], colorT2 });
+	}
+
 	vW->clear();
 	vW->drawPolygon(globalColor);
 	vW->update();
@@ -293,6 +306,10 @@ void ImageViewer::on_tbShear_clicked()
 	std::vector<QPoint> original = vW->getPolygonPoints();
 	std::vector<QPoint> sheared = vW->shear(original, koefx);
 	vW->setPolygonPoints(sheared);
+
+	if (sheared.size() == 3) {
+		vW->setTriangleVertices({ sheared[0], colorT0 }, { sheared[1], colorT1 }, { sheared[2], colorT2 });
+	}
 
 	vW->clear();
 	vW->drawPolygon(globalColor);
@@ -309,6 +326,10 @@ void ImageViewer::on_tbRotate_clicked() // Nazov podla tvojho ToolButtonu
 	//vypocitame rotaciu
 	std::vector<QPoint> rotated = vW->rotate(original, angle);
 
+	if (rotated.size() == 3) {
+		vW->setTriangleVertices({ rotated[0], colorT0 }, { rotated[1], colorT1 }, { rotated[2], colorT2 });
+	}
+
 	vW->setPolygonPoints(rotated);
 	vW->clear();
 	vW->drawPolygon(globalColor);
@@ -324,6 +345,10 @@ void ImageViewer::on_tbSymmetry_clicked()
 	std::vector<QPoint> reflected = vW->reflect(original, A, B);
 	vW->setPolygonPoints(reflected);
 
+	if (reflected.size() == 3) {
+		vW->setTriangleVertices({ reflected[0], colorT0 }, { reflected[1], colorT1 }, { reflected[2], colorT2 });
+	}
+
 	vW->clear();
 	vW->drawPolygon(globalColor);
 	vW->update();
@@ -332,19 +357,22 @@ void ImageViewer::on_tbSymmetry_clicked()
 void ImageViewer::on_tbFill_clicked() {
 	std::vector<QPoint> points = vW->getPolygonPoints();
 
+	bool isChecked = ui->tbFill->isChecked();
+	int fillType = ui->cbFillType->currentIndex();
+
+	vW->setFillEnabled(isChecked);
+	vW->setFillType(fillType);
+
 	if (points.size() == 3) {
+	
 		Vertex t0 = { points[0], colorT0 };
 		Vertex t1 = { points[1], colorT1 };
 		Vertex t2 = { points[2], colorT2 };
-
-		int fillType = ui->cbFillType->currentIndex();
-
-		vW->fillTriangle(t0, t1, t2, fillType);
-	}
-	else if (points.size() > 3) {
-		vW->fillScanLine(points, globalColor);
+		vW->setTriangleVertices(t0, t1, t2); 
 	}
 
+	vW->clear();
+	vW->drawPolygon(globalColor); 
 	vW->update();
 }
 

@@ -150,6 +150,15 @@ void ViewerWidget::clear()
 	update();
 }
 
+void ViewerWidget::clearAll()
+{
+	polygonPoints.clear();      // vymazeme zoznam bodov objektu
+	polygonClosed = false;      // resetneme stav uzavretia
+	fillEnabled = false;        // vypneme vypln
+	drawPolygonActivated = false; // vypneme rezim kreslenia
+	clear();                    // vymazeme samotne biele platno (img->fill)
+}
+
 void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 {
 	double x1 = start.x();
@@ -293,18 +302,38 @@ void ViewerWidget::drawPolygon(QColor color)
 {
 	if (polygonPoints.size() < 2) return;
 
+	//najprv si pripravime orezane body pre obrys aj pre scanline
+	//clipSutherlandHodgman nam vrati body, ktore su uz vnutri platna
+	std::vector<QPoint> pointsToDraw = polygonPoints;
+	if (polygonClosed) {
+		pointsToDraw = clipSutherlandHodgman(this->polygonPoints);
+	}
+
+	//vykreslenie vyplne, ale iba ak je zapnuta a polygon je uz uzavrety
+	if (polygonClosed && fillEnabled) {
+		// ak je to trojuholnik, pouzijeme povodne vrcholy (base_t0, t1, t2), farby tak zostanu spravne
+		if (polygonPoints.size() == 3) {
+			fillTriangle(base_t0, base_t1, base_t2, currentFillType);
+		}
+		// ak je to standartny polygon, vyplname pomocou ScanLine s orezanymi bodmi
+		else if (polygonPoints.size() > 3) {
+			fillScanLine(pointsToDraw, color);
+		}
+
+	}
+
+	// vykreslenie obrysu
 	if (!polygonClosed) {
-		for (size_t i = 0; i < polygonPoints.size() - 1; i++) { //teda zacneme od 1.
+		for (size_t i = 0; i < polygonPoints.size() - 1; i++) {
 			drawLine(polygonPoints[i], polygonPoints[i + 1], color);
 		}
-	} else {
-		std::vector<QPoint> pointsToDraw = clipSutherlandHodgman(this->polygonPoints);
-
+	}
+	else {
+		//tu uz pouzivame orezane body, aby ciary sa nekoncili mimo obrazka
 		if (pointsToDraw.size() >= 2) {
 			for (size_t i = 0; i < pointsToDraw.size(); i++) {
 				QPoint start = pointsToDraw[i];
 				QPoint end;
-
 				if (i == pointsToDraw.size() - 1) {
 					end = pointsToDraw[0];
 				}
@@ -315,7 +344,10 @@ void ViewerWidget::drawPolygon(QColor color)
 			}
 		}
 	}
+
 }
+
+
 
 std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle_deg, QPoint pivot) {
 	std::vector<QPoint> rotated;
@@ -438,7 +470,8 @@ std::vector<QPoint> ViewerWidget::clipSutherlandHodgman(const std::vector<QPoint
 	//clipped = clipEdgeSH(clipped, -(img->height()-1));
 	//clipped = rotate(clipped, -90, origin);
 
-	int xmin[4] = {5,5,-(img->width() - 5),-(img->height() - 5)};
+	/*int xmin[4] = {5,5,-(img->width() - 5),-(img->height() - 5)};*/
+	int xmin[4] = { 0, 0, -(img->width() - 1), -(img->height() - 1) };
 	for (int i = 0; i < 4; i++) {
 		clipped = clipEdgeSH(clipped, xmin[i]);
 		clipped = rotate(clipped, -90, origin);
@@ -454,7 +487,8 @@ std::vector<QPoint> ViewerWidget::clipCyrusBeck(QPoint P1, QPoint P2) {
 	double tUp = 1;
 	QPoint d = P2 - P1;
 
-	QPoint edges[4] = {QPoint(5,5), QPoint(5, (img->height()) - 5), QPoint(img->width() - 5, img->height() - 5), QPoint(img->width() - 5, 5)};
+	/*QPoint edges[4] = {QPoint(5,5), QPoint(5, img->height()) - 5, QPoint(img->width() - 5, img->height() - 5), QPoint(img->width() - 5, 5)};*/
+	QPoint edges[4] = { QPoint(0,0), QPoint(0, img->height() - 1), QPoint(img->width() - 1, img->height() - 1), QPoint(img->width() - 1, 0) };
 
 	for (int i = 0; i < 4; i++) {
 		double u, v;
@@ -656,6 +690,23 @@ void ViewerWidget::fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType) {
 	}
 }
 
+void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType)
+{
+	for (int y = y1; y <= y2; y++) {
+
+		int startX = (int)std::ceil(std::min(x1, x2));
+		int endX = (int)std::floor(std::max(x1, x2));
+
+		for (int x = startX; x <= endX; x++) {
+			setPixel(x, y, getColor(x, y, fillType));
+		}
+
+		x1 += w1;
+		x2 += w2;
+	}
+}
+
+
 void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
 {
 	double w1 = (double)(t2.pos.x() - t0.pos.x()) / (t2.pos.y() - t0.pos.y());
@@ -667,18 +718,7 @@ void ViewerWidget::fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillT
 	int y1 = t0.pos.y();
 	int y2 = t2.pos.y();
 
-
-	for (int y = y1; y <= y2; y++) {
-		int startX = std::min((int)x1, (int)x2);
-		int endX = std::max((int)x1, (int)x2);
-
-		for (int x = startX; x <= endX; x++) {
-			setPixel(x, y, getColor(x, y, fillType));
-		}
-
-		x1 += w1;
-		x2 += w2;
-	}
+	fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
 }
 
 void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType)
@@ -694,21 +734,7 @@ void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType
 	int y1 = t0.pos.y();
 	int y2 = t1.pos.y();
 
-	//ideme riadok po riadku od hornej (t0.y) az po spodnu hranu (t1.y)
-	for (int y = y1; y <= y2; y++) {
-		//vykreslime vodorovnu usecku medzi x1 a x2
-		int startX = std::min((int)x1, (int)x2);
-		int endX = std::max((int)x1, (int)x2);
-
-
-		for (int x = startX; x <= endX; x++) {
-			setPixel(x, y, getColor(x, y, fillType));
-		}
-
-		// posun x suradnic pre dalsi riadok 
-		x1 += w1;
-		x2 += w2;
-	}
+	fillTrianglePart(y1, y2, x1, x2, w1, w2, fillType);
 }
 
 QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)

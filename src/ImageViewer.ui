@@ -359,6 +359,9 @@
                 <property name="text">
                  <string>Fill Polygon</string>
                 </property>
+                <property name="checkable">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
              </layout>

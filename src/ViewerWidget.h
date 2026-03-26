@@ -27,6 +27,9 @@ private:
 
 	Vertex base_t0, base_t1, base_t2;
 
+	bool fillEnabled = false; 
+	int currentFillType = 0;
+
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
 	~ViewerWidget();
@@ -58,6 +61,8 @@ public:
 	int getImgHeight() { return img ? img->height() : 0; };
 
 	void clear();
+
+	void clearAll();
 
 	//Algorithms
 	void drawLineDDA(QPoint start, QPoint end, QColor color);
@@ -100,12 +105,20 @@ public:
 	void fillScanLine(std::vector<QPoint> points, QColor color);
 
 	void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
+	void fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType);
 	void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
 	void fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
-	double getTriangleArea(QPoint t0, QPoint t1, QPoint t2);
 	QColor  getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
 	QColor getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
 	QColor getColor(int x, int y, int fillType);
+
+	void setTriangleVertices(Vertex t0, Vertex t1, Vertex t2) {
+		base_t0 = t0;
+		base_t1 = t1;
+		base_t2 = t2;
+	}
+	void setFillEnabled(bool enabled) { fillEnabled = enabled; }
+	void setFillType(int type) { currentFillType = type; }
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
