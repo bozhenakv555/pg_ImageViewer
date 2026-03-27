@@ -191,6 +191,25 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			}
 		}
 	}
+	else if (ui->toolButtonBSpline->isChecked()) {
+		//lavym tlacidlom len pridavame body
+		if (e->button() == Qt::LeftButton) {
+
+			w->addBSplinePoint(e->pos());
+
+			//vykreslime bod
+			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+			w->update();
+		}
+		//prave tlacidlo - vykreslime samotnu krivku
+		else if (e->button() == Qt::RightButton) {
+			if (w->getBSplinePoints().size() >= 4) {
+				w->clear();
+				w->drawBSplineCurve(globalColor);
+				w->update();
+			}
+		}
+	}
 }
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {

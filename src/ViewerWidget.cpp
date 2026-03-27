@@ -157,6 +157,7 @@ void ViewerWidget::clearAll()
 	polygonPoints.clear(); //vymazeme zoznam bodov polygona
 	hermitePoints.clear(); //aj krivky
 	bezierPoints.clear();
+	bSplinePoints.clear();
 	polygonClosed = false; //resetneme stav uzavretia
 	fillEnabled = false; //vypneme vypln
 	drawPolygonActivated = false; //vypneme rezim kreslenia
@@ -905,6 +906,60 @@ void ViewerWidget::drawBezierCurve(QColor color)
 		QPoint p = bezierPoints[i]; //vyberieme si jeden konkretny bod zo zoznamu
 		for (int dx = -2; dx <= 2; dx++) { //dvoma cyklami zostrojme pixely okolo neho
 			for (int dy = -2; dy <= 2; dy++) { // dx a dy idu od -2 po 2 (5 pixelov sirka/vyska)
+				setPixel(p.x() + dx, p.y() + dy, Qt::red);
+			}
+		}
+	}
+}
+
+void ViewerWidget::drawBSplineCurve(QColor color)
+{
+	//a jeden segment potrebujeme stvoricu bodov takze pod 4 nic nekreslime
+	if (bSplinePoints.size() < 4) return;
+
+	int n = bSplinePoints.size();
+	int NSegments = 100; //kolko ciarok urobime v ramci jedneho segmentu
+	double dt = 1.0 / NSegments;
+
+	//prechadzame body tak aby sme vzdy mali stvoricu (i-3, i-2, i-1, i)
+	for (int i = 3; i < n; i++) {
+		QPoint P0 = bSplinePoints[i - 3];
+		QPoint P1 = bSplinePoints[i - 2];
+		QPoint P2 = bSplinePoints[i - 1];
+		QPoint P3 = bSplinePoints[i];
+
+		//vypocitame uplne prvy bod segmentu pre t = 0
+		//Q(0) = (P0 + 4*P1 + P2) / 6
+		QPointF Q0((P0.x() + 4.0 * P1.x() + P2.x()) / 6.0,
+			(P0.y() + 4.0 * P1.y() + P2.y()) / 6.0);
+
+		for (double t = dt; t < 1.001; t += dt) { 
+			double t2 = t * t;
+			double t3 = t2 * t;
+
+			//Coonsove bazicke funkcie 
+			double b0 = (-t3 + 3.0 * t2 - 3.0 * t + 1.0) / 6.0;
+			double b1 = (3.0 * t3 - 6.0 * t2 + 4.0) / 6.0;
+			double b2 = (-3.0 * t3 + 3.0 * t2 + 3.0 * t + 1.0) / 6.0;
+			double b3 = t3 / 6.0;
+
+			//vypocitame polohu noveho bodu Q1
+			QPointF Q1(b0 * P0.x() + b1 * P1.x() + b2 * P2.x() + b3 * P3.x(),
+				b0 * P0.y() + b1 * P1.y() + b2 * P2.y() + b3 * P3.y());
+
+			//spojime Q0 a Q1 a zaokruhlime na pixely
+			drawLine(QPoint(qRound(Q0.x()), qRound(Q0.y())),
+				QPoint(qRound(Q1.x()), qRound(Q1.y())), color);
+
+			Q0 = Q1; //posunieme sa dalej
+		}
+	}
+
+	//nakreslime cervene stvorceky pre vsetky riadiace body
+	for (int i = 0; i < n; i++) {
+		QPoint p = bSplinePoints[i];
+		for (int dx = -2; dx <= 2; dx++) {
+			for (int dy = -2; dy <= 2; dy++) {
 				setPixel(p.x() + dx, p.y() + dy, Qt::red);
 			}
 		}

@@ -32,6 +32,7 @@ private:
 
 	std::vector<QPoint> hermitePoints;
 	std::vector<QPoint> bezierPoints;
+	std::vector<QPoint> bSplinePoints;
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
@@ -129,10 +130,14 @@ public:
 	void addHermitePoint(QPoint p) { hermitePoints.push_back(p); }
 	void clearHermitePoints() { hermitePoints.clear(); }
 	std::vector<QPoint>& getHermitePoints() { return hermitePoints; }
-
+	//bezier
 	void drawBezierCurve(QColor color);
 	void addBezierPoint(QPoint p) { bezierPoints.push_back(p);  };
 	std::vector<QPoint>& getBezierPoints() { return bezierPoints; }
+	//coons (bdpline)
+	void drawBSplineCurve(QColor color);
+	void addBSplinePoint(QPoint p) { bSplinePoints.push_back(p); };
+	std::vector<QPoint>& getBSplinePoints() { return bSplinePoints; }
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;
