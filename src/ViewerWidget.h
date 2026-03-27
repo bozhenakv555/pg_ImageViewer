@@ -130,8 +130,9 @@ public:
 	void clearHermitePoints() { hermitePoints.clear(); }
 	std::vector<QPoint>& getHermitePoints() { return hermitePoints; }
 
-	void drawBezierCurve(QColor color, int NSegments = 100);
+	void drawBezierCurve(QColor color);
 	void addBezierPoint(QPoint p) { bezierPoints.push_back(p);  };
+	std::vector<QPoint>& getBezierPoints() { return bezierPoints; }
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

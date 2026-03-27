@@ -156,6 +156,7 @@ void ViewerWidget::clearAll()
 {
 	polygonPoints.clear(); //vymazeme zoznam bodov polygona
 	hermitePoints.clear(); //aj krivky
+	bezierPoints.clear();
 	polygonClosed = false; //resetneme stav uzavretia
 	fillEnabled = false; //vypneme vypln
 	drawPolygonActivated = false; //vypneme rezim kreslenia
@@ -863,47 +864,48 @@ void ViewerWidget::drawHermiteCurve(const std::vector<double>& angles, double le
 	}
 }
 
-void ViewerWidget::drawBezierCurve(QColor color, int NSegments)
+void ViewerWidget::drawBezierCurve(QColor color)
 {
-	if (bezierPoints.size() < 2) return;
+	// ak mame menej ako dva body tak nemame co spajat
+		if (bezierPoints.size() < 2) return;
 
-	int n = bezierPoints.size(); 
-	double dt = 1.0 / NSegments;
+	int n = bezierPoints.size();
+	int NSegments = 100; //na kolko kuskov rozsekame krivku aby bola hladka
+	double dt = 1.0 / NSegments; //krok o kolko sa posunieme v kazdom cykle od 0 po 1
 
-	QPointF Q0 = bezierPoints[0];
+	QPointF Q0 = bezierPoints[0]; //zacneme kreslit v prvom riadiacom bode
 
-	for (double t = dt; t < 1.0; t += dt) {
-
-		std::vector<std::vector<QPointF>> P(n);
+	for (double t = dt; t < 1.001; t += dt) { //while (t < 1.0)
+		//ale ide az do 1.0001 aby sme kvoli zaokruhlovaniu urcite trafili aj posledny bod
+		std::vector<std::vector<QPointF>> P(n); //vyrobime si pomocnu tabulku n riadkov na vypocty podla prednasky
 		for (int i = 0; i < n; i++) {
-			P[i].resize(n - i);
+			P[i].resize(n - i); //kazdy dalsi riadok bude mat o jeden bod menej az kym nezostane jeden - "trojuholnikovy tvar"
 		}
 		for (int j = 0; j < n; j++) {
-			P[0][j] = bezierPoints[j];
+			P[0][j] = bezierPoints[j]; //do prveho riadku si len skopirujeme body co sme naklikali
 		}
 		for (int i = 1; i < n; i++) {
 			for (int j = 0; j < n - i; j++) {
-				//key vzorec: P[i,j] = (1 - t) * P[i-1,j] + t * P[i-1,j+1]
+				//vzorec co robi linearnu interpolaciu medzi bodmi z predchadzajuceho riadku; (1-t) je vaha laveho bodu a t je vaha praveho bodu
+				//berieme susedne body z riadku nad nami a vytvarame bod medzi nimi podla toho, k akemu s nich blizsi - teda ich zmesanim podla ich vah; ak t=0.1 sme blizko laveho, ak t=0.9 sme uz skoro pri pravom
+				//P[i,j] = (1 - t) * P[i-1,j] + t * P[i-1,j+1]
 				P[i][j].setX((1.0 - t) * P[i - 1][j].x() + t * P[i - 1][j + 1].x());
 				P[i][j].setY((1.0 - t) * P[i - 1][j].y() + t * P[i - 1][j + 1].y());
 			}
 		}
-		QPointF Q1 = P[n - 1][0];
-		drawLine(QPoint(qRound(Q0.x()), qRound(Q0.y())),
-			QPoint(qRound(Q1.x()), qRound(Q1.y())), color);
+		QPointF Q1 = P[n - 1][0]; //bod na krivke pre dane t; n-1 je posledny riadok naseho trojuholnika a 0 je ten jediny bod co v nom ostal
+		//spojime predchadzajuci bod s novym a zaokruhlime pre pixely
+		drawLine(QPoint(qRound(Q0.x()), qRound(Q0.y())), QPoint(qRound(Q1.x()), qRound(Q1.y())), color);
 
-		Q0 = Q1;
+		Q0 = Q1; //aktualizujeme bod aby sme v dalsej iteracii vedeli kde sme skoncili
 	}
 
-	QPointF lastPoint = bezierPoints[n - 1];
-	drawLine(QPoint(qRound(Q0.x()), qRound(Q0.y())),
-		QPoint(qRound(lastPoint.x()), qRound(lastPoint.y())), color);
-
+	//prejdeme vsetky nase naklikane body a nakreslime ich ako cervene stvorceky 5*5 aby boli viac viditelne
 	for (int i = 0; i < n; i++) {
-		QPoint p = bezierPoints[i];
-		for (int dx = -2; dx <= 2; dx++) {
-			for (int dy = -2; dy <= 2; dy++) {
-				setPixel(p.x() + dx, p.y() + dy, Qt::red); 
+		QPoint p = bezierPoints[i]; //vyberieme si jeden konkretny bod zo zoznamu
+		for (int dx = -2; dx <= 2; dx++) { //dvoma cyklami zostrojme pixely okolo neho
+			for (int dy = -2; dy <= 2; dy++) { // dx a dy idu od -2 po 2 (5 pixelov sirka/vyska)
+				setPixel(p.x() + dx, p.y() + dy, Qt::red);
 			}
 		}
 	}

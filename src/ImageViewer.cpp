@@ -172,6 +172,25 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 			}
 		}
 	}
+	else if (ui->toolButtonBezier->isChecked()) {
+		//lavym tlacidlom len pridavame body
+		if (e->button() == Qt::LeftButton) {
+
+			w->addBezierPoint(e->pos());
+
+			//vykreslime bod
+			w->setPixel(e->pos().x(), e->pos().y(), globalColor);
+			w->update();
+		}
+		//prave tlacidlo - vykreslime samotnu krivku
+		else if (e->button() == Qt::RightButton) {
+			if (w->getBezierPoints().size() >= 2) {
+				w->clear();
+				w->drawBezierCurve(globalColor);
+				w->update();
+			}
+		}
+	}
 }
 void ImageViewer::ViewerWidgetMouseButtonRelease(ViewerWidget* w, QEvent* event)
 {
