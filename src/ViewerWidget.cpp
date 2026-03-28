@@ -314,6 +314,8 @@ void ViewerWidget::drawPolygon(QColor color)
 		pointsToDraw = clipSutherlandHodgman(this->polygonPoints);
 	}
 
+	if (pointsToDraw.empty()) return;
+
 	//vykreslenie vyplne, ale iba ak je zapnuta a polygon je uz uzavrety
 	if (polygonClosed && fillEnabled) {
 		// ak je to trojuholnik, pouzijeme povodne vrcholy (base_t0, t1, t2), farby tak zostanu spravne
@@ -431,6 +433,8 @@ QPoint ViewerWidget::intersection(QPoint S, QPoint V, int xmin)
 
 std::vector<QPoint> ViewerWidget::clipEdgeSH(const std::vector<QPoint>& points, int xmin)
 {
+	if (points.empty()) return std::vector<QPoint>(); //ak nemame co orezavat, vratime prazdny vektor
+
 	std::vector<QPoint> W; //vrcholy orezaneho polygony, vrcholy orig - V - points
 	QPoint S = points.back(); //posledny vrchol points(V) - V_(n-1) 
 	//S je start bod iteracie - zaciatocny bod aktualne spracovavanej hranyS->Vi(su orientovane) (*teda vzdy prva srpacovavana hrana je medzi prvym a poslednym bodom z points)
@@ -479,6 +483,9 @@ std::vector<QPoint> ViewerWidget::clipSutherlandHodgman(const std::vector<QPoint
 	int xmin[4] = { 0, 0, -(img->width() - 1), -(img->height() - 1) };
 	for (int i = 0; i < 4; i++) {
 		clipped = clipEdgeSH(clipped, xmin[i]);
+
+		if (clipped.empty()) break;
+
 		clipped = rotate(clipped, -90, origin);
 	}
 
