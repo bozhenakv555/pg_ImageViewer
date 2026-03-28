@@ -412,13 +412,25 @@ void ImageViewer::on_tbRotate_clicked() // Nazov podla tvojho ToolButtonu
 void ImageViewer::on_tbSymmetry_clicked()
 {
 	std::vector<QPoint> original = vW->getPolygonPoints();
-	QPoint A = original[0];
-	QPoint B = original[1];
+	if (original.size() < 2) return;
 
+	QPoint A, B;
+
+	if (original.size() == 2) {
+		//ak pracujeme s useckou - zvolime horizontalnu os prechadzajucu prvym bodom
+		A = original[0]; //prvy bod
+		B = QPoint(original[0].x() + 10, original[0].y()); //bod vytvoreny posunutim prveho vpravo o 10 pixelov
+	}
+	else {
+		//ak s polygonom - os lezi na prvej hrane
+		A = original[0];
+		B = original[1];
+	}
 	std::vector<QPoint> reflected = vW->reflect(original, A, B);
 	vW->setPolygonPoints(reflected);
 
 	if (reflected.size() == 3) {
+		//ak je to trojuholnik, musime mu prepisat vrcholy, nech sa farby a vypln nezaseknu na starom mieste
 		vW->setTriangleVertices({ reflected[0], colorT0 }, { reflected[1], colorT1 }, { reflected[2], colorT2 });
 	}
 

@@ -415,8 +415,9 @@ std::vector<QPoint> ViewerWidget::reflect(const std::vector<QPoint>& points, QPo
 
 	for (QPoint point : points) {
 		double d = (a * point.x() + b * point.y() + c) / (a * a + b * b);
-		int xnew = point.x() - 2 * a * d;
-		int ynew = point.y() - 2 * b * d;
+		//zaokruhlime na najblizsi pixel, nech netratime presnost (inak by 10.9 bolo 10)
+		int xnew = qRound(point.x() - 2 * a * d);
+		int ynew = qRound(point.y() - 2 * b * d);
 		reflectedpoint = QPoint(xnew, ynew);
 		reflected.push_back(reflectedpoint);
 	}
