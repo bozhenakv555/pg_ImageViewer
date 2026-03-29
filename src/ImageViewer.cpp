@@ -7,17 +7,26 @@ ImageViewer::ImageViewer(QWidget* parent)
 	vW = new ViewerWidget(QSize(500, 500), ui->scrollArea);
 	ui->scrollArea->setWidget(vW);
 
-	ui->scrollArea->setBackgroundRole(QPalette::Dark); //pre odlisnoost pozadia od vw asi
+	ui->scrollArea->setBackgroundRole(QPalette::Dark); //pre odlisnoost pozadia od vw 
 	ui->scrollArea->setWidgetResizable(false); //aby sme nemohli menit velkost
-	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded); //aby tie scrollbary sa objavovali iba sk potrebujeme (obrazok vrlky) asi:)
+	ui->scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded); //aby tie scrollbary sa objavovali iba ak potrebujeme (obrazok velky):)
 	ui->scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
 
 	vW->setObjectName("ViewerWidget");
 	vW->installEventFilter(this);
 
 	globalColor = Qt::blue; //default farba
-	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb));
-	ui->pushButtonSetColor->setStyleSheet(style_sheet);
+	QString style_sheet = QString("background-color: %1;").arg(globalColor.name(QColor::HexRgb)); 
+	ui->pushButtonSetColor->setStyleSheet(style_sheet); //aby ten pbutton bol defaultnej modrej farby
+
+	//nastavime pozadie tlacidla T0 na cervenu (default)
+	ui->pbT0Color->setStyleSheet(QString("background-color: %1;").arg(colorT0.name(QColor::HexRgb)));
+
+	//nastavime pozadie tlacidla T1 na zelenu (default)
+	ui->pbT1Color->setStyleSheet(QString("background-color: %1;").arg(colorT1.name(QColor::HexRgb)));
+
+	//nastavime pozadie tlacidla T2 na modru (default)
+	ui->pbT2Color->setStyleSheet(QString("background-color: %1;").arg(colorT2.name(QColor::HexRgb)));
 }
 
 // Event filters
@@ -62,6 +71,11 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
 	QMouseEvent* e = static_cast<QMouseEvent*>(event); //pretypovanie vseobecneho QEvent na QMouseEvent
+
+	//ak user klikne mimo bieleho platna, ignorujeme to
+	if (!w->isInside(e->pos().x(), e->pos().y())) {
+		return;
+	}
 
 	if (e->button() == Qt::LeftButton) {
 		w->setStartMousePos(e->pos()); //ulozime pociatocnu polohu mysi pre vypocet posunu (SHIFT)
@@ -224,6 +238,8 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 		QPoint delta = e->pos() - w->getStartMousePos();
 		std::vector<QPoint> points = w->getPolygonPoints();
 
+		if (points.empty()) return;
+
 		for (QPoint& point : points) {
 			point += delta;
 		}
@@ -339,6 +355,9 @@ void ImageViewer::on_actionSave_as_triggered()
 void ImageViewer::on_actionClear_triggered()
 {
 	vW->clearAll();
+	hermiteVectorAngles.clear(); //vymazeme aj uhly v ImageVieweri
+	ui->sbPointIndex->setMaximum(0); //resetneme UI prvok
+	currentPointIndex = -1;
 }
 void ImageViewer::on_actionExit_triggered()
 {

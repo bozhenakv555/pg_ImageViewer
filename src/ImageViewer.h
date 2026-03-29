@@ -26,7 +26,7 @@ private:
 
 	std::vector<double> hermiteVectorAngles; 
 	double hermiteVectorLength = 150.0; 
-	int currentPointIndex = 0;
+	int currentPointIndex = -1;
 
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);

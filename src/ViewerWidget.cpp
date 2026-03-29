@@ -876,7 +876,7 @@ void ViewerWidget::drawHermiteCurve(const std::vector<double>& angles, double le
 void ViewerWidget::drawBezierCurve(QColor color)
 {
 	// ak mame menej ako dva body tak nemame co spajat
-		if (bezierPoints.size() < 2) return;
+	if (bezierPoints.size() < 2) return;
 
 	int n = bezierPoints.size();
 	int NSegments = 100; //na kolko kuskov rozsekame krivku aby bola hladka

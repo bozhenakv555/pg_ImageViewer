@@ -108,6 +108,16 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
+            <widget class="QToolButton" name="toolButtonDrawLine">
+             <property name="text">
+              <string>Line</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QToolButton" name="toolButtonDrawPolygon">
              <property name="text">
               <string>Polygon</string>
@@ -151,16 +161,6 @@
                <string>Bresenham</string>
               </property>
              </item>
-            </widget>
-           </item>
-           <item>
-            <widget class="QToolButton" name="toolButtonDrawLine">
-             <property name="text">
-              <string>Line</string>
-             </property>
-             <property name="checkable">
-              <bool>true</bool>
-             </property>
             </widget>
            </item>
           </layout>
@@ -272,7 +272,7 @@
              <property name="title">
               <string/>
              </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <layout class="QVBoxLayout" name="verticalLayout_4">
               <item>
                <widget class="QToolButton" name="tbSymmetry">
                 <property name="text">
@@ -302,6 +302,9 @@
                <widget class="QPushButton" name="pbT0Color">
                 <property name="text">
                  <string>T0 color</string>
+                </property>
+                <property name="default">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -397,6 +400,9 @@
                   </widget>
                  </item>
                  <item>
+                  <widget class="QSpinBox" name="sbPointIndex"/>
+                 </item>
+                 <item>
                   <widget class="QDoubleSpinBox" name="dsbVectorAngle">
                    <property name="minimum">
                     <double>-360.000000000000000</double>
@@ -405,9 +411,6 @@
                     <double>360.000000000000000</double>
                    </property>
                   </widget>
-                 </item>
-                 <item>
-                  <widget class="QSpinBox" name="sbPointIndex"/>
                  </item>
                  <item>
                   <widget class="QDoubleSpinBox" name="dsbVectorLength">

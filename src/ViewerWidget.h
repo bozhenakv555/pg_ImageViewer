@@ -134,7 +134,7 @@ public:
 	void drawBezierCurve(QColor color);
 	void addBezierPoint(QPoint p) { bezierPoints.push_back(p);  };
 	std::vector<QPoint>& getBezierPoints() { return bezierPoints; }
-	//coons (bdpline)
+	//coons (bSpline)
 	void drawBSplineCurve(QColor color);
 	void addBSplinePoint(QPoint p) { bSplinePoints.push_back(p); };
 	std::vector<QPoint>& getBSplinePoints() { return bSplinePoints; }
