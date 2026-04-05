@@ -115,6 +115,9 @@
              <property name="checkable">
               <bool>true</bool>
              </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
+             </property>
             </widget>
            </item>
            <item>
@@ -124,6 +127,9 @@
              </property>
              <property name="checkable">
               <bool>true</bool>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
              </property>
              <property name="popupMode">
               <enum>QToolButton::ToolButtonPopupMode::DelayedPopup</enum>
@@ -137,6 +143,9 @@
              </property>
              <property name="checkable">
               <bool>true</bool>
+             </property>
+             <property name="autoExclusive">
+              <bool>false</bool>
              </property>
             </widget>
            </item>
@@ -183,6 +192,9 @@
                 <property name="text">
                  <string>Rotate</string>
                 </property>
+                <property name="autoExclusive">
+                 <bool>false</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -216,6 +228,9 @@
                 <property name="text">
                  <string>Scale</string>
                 </property>
+                <property name="autoExclusive">
+                 <bool>false</bool>
+                </property>
                </widget>
               </item>
               <item>
@@ -244,6 +259,9 @@
                <widget class="QToolButton" name="tbShear">
                 <property name="text">
                  <string>Shear</string>
+                </property>
+                <property name="autoExclusive">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -277,6 +295,9 @@
                <widget class="QToolButton" name="tbSymmetry">
                 <property name="text">
                  <string>Reflect</string>
+                </property>
+                <property name="autoExclusive">
+                 <bool>false</bool>
                 </property>
                </widget>
               </item>
@@ -390,6 +411,9 @@
                    <property name="checkable">
                     <bool>true</bool>
                    </property>
+                   <property name="autoExclusive">
+                    <bool>false</bool>
+                   </property>
                   </widget>
                  </item>
                  <item>
@@ -439,6 +463,9 @@
                    <property name="checkable">
                     <bool>true</bool>
                    </property>
+                   <property name="autoExclusive">
+                    <bool>false</bool>
+                   </property>
                   </widget>
                  </item>
                  <item>
@@ -448,6 +475,9 @@
                    </property>
                    <property name="checkable">
                     <bool>true</bool>
+                   </property>
+                   <property name="autoExclusive">
+                    <bool>false</bool>
                    </property>
                   </widget>
                  </item>

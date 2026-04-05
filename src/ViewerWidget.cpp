@@ -284,9 +284,9 @@ void ViewerWidget::drawCircleBresenham(QPoint center, QPoint edge, QColor color)
 		setPixel(sx - y, sy - x, color);
 
 		// Rozhodovacia podmienka
-		if (p > 0) {
+		if (p > 0) { 
 			p = p + dvaX - dvaY + 5;
-			y--;
+			y--; 
 			dvaY -= 2;
 		}
 		else {
@@ -319,11 +319,11 @@ void ViewerWidget::drawPolygon(QColor color)
 	//vykreslenie vyplne, ale iba ak je zapnuta a polygon je uz uzavrety
 	if (polygonClosed && fillEnabled) {
 		// ak je to trojuholnik, pouzijeme povodne vrcholy (base_t0, t1, t2), farby tak zostanu spravne
-		if (polygonPoints.size() == 3) {
+		if (polygonPoints.size() == 3 & currentFillType != 0) {
 			fillTriangle(base_t0, base_t1, base_t2, currentFillType);
 		}
 		// ak je to standartny polygon, vyplname pomocou ScanLine s orezanymi bodmi
-		else if (polygonPoints.size() > 3) {
+		else {
 			fillScanLine(pointsToDraw, color);
 		}
 
@@ -369,7 +369,7 @@ std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, doub
 	return rotated;
 }
 
-std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle) {
+std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle) { //pretazovanie rotate
 	return rotate(points, angle, points[0]); 
 }
 
@@ -380,7 +380,7 @@ std::vector<QPoint> ViewerWidget::scale(const std::vector<QPoint>& points, doubl
 	QPoint scaledpoint;
 	QPoint pivot = points[0];
 	for (QPoint point : points) {
-		scaledpoint = QPoint((point.x() - pivot.x()) * factorx + pivot.x(), (point.y() - pivot.y()) * factory + pivot.y());
+		scaledpoint = QPoint(qRound((point.x() - pivot.x()) * factorx + pivot.x()), qRound((point.y() - pivot.y()) * factory + pivot.y()));
 		scaled.push_back(scaledpoint);
 	}
 	return scaled;
@@ -392,7 +392,7 @@ std::vector<QPoint> ViewerWidget::shear(const std::vector<QPoint>& points, doubl
 	QPoint shearedpoint;
 	QPoint pivot = points[0];
 	for (QPoint point : points) {
-		shearedpoint = QPoint((point.x() - pivot.x())+ koefx * (point.y() - pivot.y()) +pivot.x(), point.y()); //posunieme bod k nule (odcitame pivot), tam ho "skrivime" (*koefx) a potom ho vratime spat tam kde bol (pripocitame pivot)
+		shearedpoint = QPoint(qRound((point.x() - pivot.x())+ koefx * (point.y() - pivot.y()) +pivot.x()), point.y()); //posunieme bod k nule (odcitame pivot), tam ho "skrivime" (*koefx) a potom ho vratime spat tam kde bol (pripocitame pivot)
 		sheared.push_back(shearedpoint);
 	}
 	return sheared;
@@ -438,7 +438,7 @@ std::vector<QPoint> ViewerWidget::clipEdgeSH(const std::vector<QPoint>& points, 
 
 	std::vector<QPoint> W; //vrcholy orezaneho polygony, vrcholy orig - V - points
 	QPoint S = points.back(); //posledny vrchol points(V) - V_(n-1) 
-	//S je start bod iteracie - zaciatocny bod aktualne spracovavanej hranyS->Vi(su orientovane) (*teda vzdy prva srpacovavana hrana je medzi prvym a poslednym bodom z points)
+	//S je start bod iteracie - zaciatocny bod aktualne spracovavanej hranyS->Vi(su orientovane) (*teda vzdy prva spracovavana hrana je medzi prvym a poslednym bodom z points)
 	for (const QPoint& Vi : points) { //Vi su koncove body hran S->Vi
 		if (Vi.x() >= xmin) { //koncovy je vnutri okna
 			if (S.x() >= xmin) { //aj zaciatocny je vnutri - obidva
@@ -451,7 +451,7 @@ std::vector<QPoint> ViewerWidget::clipEdgeSH(const std::vector<QPoint>& points, 
 			}
 		}
 		else { //koncovy je vonku
-			if (S.x() >= xmin) { //ale zaciatocny vnutri - hrana vychadza s okna
+			if (S.x() >= xmin) { //ale zaciatocny vnutri - hrana vychadza z okna
 				QPoint Pi = intersection(S, Vi, xmin);
 				W.push_back(Pi); //do vysledku ide vypocitany priesecnik (lebo zaciatocne nepridavame hned, pokial nedojdeme k nim ako koncovym))
 			}
@@ -532,6 +532,7 @@ std::vector<QPoint> ViewerWidget::clipCyrusBeck(QPoint P1, QPoint P2) {
 		}
 		else { //usecka je rovnobezna s hranou
 			if (wn < 0) return std::vector<QPoint>(); //ak je bod vonku (wn < 0), cela usecka je mimo
+			continue;
 		}
 
 	}
@@ -588,7 +589,7 @@ void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
 
 		if (z.y() == k.y()) continue; //vynechavanie vodorovnych hran
 		
-		if (k.y() < z.y()) std::swap(z,k); //zorientovanie
+		if (k.y() < z.y()) std::swap(z,k); //zorientovanie zhora nadol
 
 		Edge e;
 		e.y_z = z.y();

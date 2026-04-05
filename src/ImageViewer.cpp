@@ -30,23 +30,25 @@ ImageViewer::ImageViewer(QWidget* parent)
 }
 
 // Event filters
-bool ImageViewer::eventFilter(QObject* obj, QEvent* event) //kazda jedna blbost v Qt je zdedena s QObject:)
+//tu zachytavame vsetko, co sa deje v aplikacii
+bool ImageViewer::eventFilter(QObject* obj, QEvent* event) //"kazda jedna blbost v Qt je zdedena s QObject:)"
 {
-	if (obj->objectName() == "ViewerWidget") { //chceme, aby iventy boli spracovane prave nad tym platnom vw pomocou ViewerWidgetEventFilter, tak kontrolujeme menu objektu
-		return ViewerWidgetEventFilter(obj, event);
+	if (obj->objectName() == "ViewerWidget") { //chceme, aby iventy boli spracovane prave nad tym platnom vw pomocou ViewerWidgetEventFilter, tak kontrolujeme meno objektu - ci ta udalost sa stala prave na nom
+		return ViewerWidgetEventFilter(obj, event); //ak ano, posleme to do nasho specialneho filtra pre platno
 	}
 	return QMainWindow::eventFilter(obj, event); //ak obj nie vw - default ivent
 }
 
 //ViewerWidget Events
-bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
+bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event) //tu triedime udalosti nad platnom podla typu - klik, pohyb, koliesko...
 {
-	ViewerWidget* w = static_cast<ViewerWidget*>(obj); //pretypovanie smernika na parent triedu na smernik na child triedu +NAUC VIAC
+	ViewerWidget* w = static_cast<ViewerWidget*>(obj); //pretypovanie smernika na parent triedu na smernik na child triedu - QObject na ViewerWidget
 
 	if (!w) {
 		return false;
 	}
 
+	//podla toho co sa stalo, zavolame konkretnu funkciu
 	if (event->type() == QEvent::MouseButtonPress) {
 		ViewerWidgetMouseButtonPress(w, event);
 	}
@@ -70,8 +72,9 @@ bool ImageViewer::ViewerWidgetEventFilter(QObject* obj, QEvent* event)
 
 void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 {
-	QMouseEvent* e = static_cast<QMouseEvent*>(event); //pretypovanie vseobecneho QEvent na QMouseEvent
-
+	//pretypovanie vseobecneho QEvent na QMouseEvent
+	QMouseEvent* e = static_cast<QMouseEvent*>(event); //aby sme mohli ziskavat info o kliku (akym tlacidlom, suradnice(pos))
+	
 	//ak user klikne mimo bieleho platna, ignorujeme to
 	if (!w->isInside(e->pos().x(), e->pos().y())) {
 		return;
@@ -85,7 +88,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 	if (ui->toolButtonDrawLine->isChecked())
 	{
 		if (e->button() == Qt::LeftButton) {
-			if (w->getDrawLineActivated()) { //ciaru kreslime iba ak mame aktivovane jej kreslenie
+			if (w->getDrawLineActivated()) { //uz je aktivovane kreslenie - mame uz zaciatocny bod v pamati -> kreslime usecku
 				w->drawLine(w->getDrawLineBegin(), e->pos(), globalColor, ui->comboBoxLineAlg->currentIndex());
 
 				w->clearPolygonPoints(); //vymazeme predchadzajuci objekt (podla zadania len jeden objekt naraz)
@@ -95,11 +98,11 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 
 				w->setDrawLineActivated(false);
 			}
-			else {
+			else { //lineActivated vratilo false - usecka sa prave zacina
 				w->clear(); //+!
 				w->clearPolygonPoints();
 
-				w->setDrawLineBegin(e->pos()); //volame funkciu vw a tam posielame objekt typu QPoint (uchovava int suradnice, ale QPointF float suradnice)
+				w->setDrawLineBegin(e->pos()); //ulozime pociatocny bod usecky - volame funkciu vw a tam posielame objekt typu QPoint (uchovava int suradnice, ale QPointF float suradnice)
 				w->setDrawLineActivated(true);
 				w->setPixel(e->pos().x(), e->pos().y(), globalColor);
 				w->update(); //sa vyvola paintEvent - prekresli obrazok
@@ -149,7 +152,7 @@ void ImageViewer::ViewerWidgetMouseButtonPress(ViewerWidget* w, QEvent* event)
 		}
 		else if (e->button() == Qt::RightButton) {
 			if (w->getdrawPolygonActivated() && w->getPolygonPoints().size() > 2) {
-				w->setPolygonClosed(true);
+				w->setPolygonClosed(true); //povieme vw, ze ma spojit posledny bod s prvym
 
 				w->clear();
 				w->drawPolygon(globalColor);
@@ -235,7 +238,7 @@ void ImageViewer::ViewerWidgetMouseMove(ViewerWidget* w, QEvent* event)
 	QMouseEvent* e = static_cast<QMouseEvent*>(event);
 	//SHIFT
 	if ((e->buttons() == Qt::LeftButton) && !ui->toolButtonDrawLine->isChecked() && !ui->toolButtonDrawPolygon->isChecked() && !ui->toolButtonDrawCircle->isChecked() && !ui->toolButtonHermite->isChecked()) {
-		QPoint delta = e->pos() - w->getStartMousePos();
+		QPoint delta = e->pos() - w->getStartMousePos(); //smer a vzdialenost pohybu mysi
 		std::vector<QPoint> points = w->getPolygonPoints();
 
 		if (points.empty()) return;
@@ -271,6 +274,7 @@ void ImageViewer::ViewerWidgetWheel(ViewerWidget* w, QEvent* event)
 	double factor = (e->angleDelta().y() > 0) ? 1.25 : 0.75; //ak je y-ova (koliesko hore-dole iba) suradnica angleDelta (vector otocenia kolieska) kladna, scrollovali sme hore (faktor 1.25), inak sme scrollovali dole (faktor 0.75)
 
 	std::vector<QPoint> original = w->getPolygonPoints();
+	if (original.empty()) return;
 	std::vector<QPoint> scaled = w->scale(original, factor, factor);
 	w->setPolygonPoints(scaled);
 
@@ -521,26 +525,28 @@ void ImageViewer::on_pbT2Color_clicked()
 }
 
 void ImageViewer::on_sbPointIndex_valueChanged(int i) {
-	currentPointIndex = i - 1; // -1, lebo v UI zaciname od 1, ale v array od 0
+	currentPointIndex = i - 1; // -1, lebo v UI zaciname od 1, ale v vector od 0
 
+	//ak mame vybraty validny index, vytiahneme uhol z pola a nastavime ho do UI
 	if (currentPointIndex >= 0 && currentPointIndex < hermiteVectorAngles.size()) {
-		double angleDegrees = hermiteVectorAngles[currentPointIndex] * (180.0 / M_PI);
+		double angleDegrees = hermiteVectorAngles[currentPointIndex] * (180.0 / M_PI); //prevod z radianov na stupne pre UI spinbox
 		ui->dsbVectorAngle->setValue(angleDegrees);
 	}
 }
 
 void ImageViewer::on_dsbVectorAngle_valueChanged(double value) {
+	//ak mame vybraty nejaky bod, prepiseme mu uhol v poli a prekreslime
 	if (currentPointIndex >= 0 && currentPointIndex < hermiteVectorAngles.size()) {
-		hermiteVectorAngles[currentPointIndex] = value * (M_PI / 180.0); //prevod na radiany 
-		vW->clear();
-		vW->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor);
+		hermiteVectorAngles[currentPointIndex] = value * (M_PI / 180.0); //prevod spat na radiany pre vypocty
+		vW->clear(); //zmazeme stare
+		vW->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor); //vykreslime s novym uhlom
 		vW->update();
 	}
 }
 
 void ImageViewer::on_dsbVectorLength_valueChanged(double value) {
-	hermiteVectorLength = value;
+	hermiteVectorLength = value; //zmenime globalnu dlzku vektorov
 	vW->clear();
-	vW->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor);
+	vW->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor); //prekreslime celu krivku s novou dlzkou
 	vW->update();
 }

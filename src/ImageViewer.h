@@ -69,4 +69,5 @@ public slots:
 	void on_dsbVectorAngle_valueChanged(double value);
 	void on_dsbVectorLength_valueChanged(double value);
 	void on_sbPointIndex_valueChanged(int i);
+	//void resetAllButtonsExcept(QToolButton* keep); -> //ui->toolButton->setChecked(ui->toolButton == keep); pre kazdy -> potom v kazdom slote pre draw toolbuttony prvym riadkom
 };

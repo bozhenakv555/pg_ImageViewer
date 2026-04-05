@@ -112,7 +112,7 @@ public:
 	void fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType);
 	void fillBottomTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
 	void fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
-	QColor  getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
+	QColor getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
 	QColor getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2);
 	QColor getColor(int x, int y, int fillType);
 
