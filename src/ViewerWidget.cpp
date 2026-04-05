@@ -354,8 +354,6 @@ void ViewerWidget::drawPolygon(QColor color)
 
 }
 
-
-
 std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle_deg, QPoint pivot) {
 	std::vector<QPoint> rotated;
 	double angle_rad = angle_deg * (M_PI / 180.0);
@@ -372,7 +370,6 @@ std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, doub
 std::vector<QPoint> ViewerWidget::rotate(const std::vector<QPoint>& points, double angle) { //pretazovanie rotate
 	return rotate(points, angle, points[0]); 
 }
-
 
 std::vector<QPoint> ViewerWidget::scale(const std::vector<QPoint>& points, double factorx, double factory)
 {
