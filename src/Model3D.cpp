@@ -1,6 +1,7 @@
 #include "Model3D.h"
 #include <string>
 #include <fstream>
+#include <sstream>
 
 void Model3D::createCube(double a) {
 	vertices.clear();
@@ -63,4 +64,44 @@ bool Model3D::saveToVTK(QString filename) {
 	}
 	file.close();
 	return true;
+}
+
+bool Model3D::loadFromVTK(QString filename)
+{
+	std::string path = filename.toStdString();
+	std::ifstream file(path);
+	if (!file.is_open()) {
+		return false;
+	}
+	std::string line;
+	while (std::getline(file, line)) {
+		std::stringstream ss(line);
+		std::string keyword;
+		ss >> keyword;
+		if (keyword == "POINTS") {
+			int count;
+			std::string datatype;
+			ss >> count >> datatype;
+			vertices.resize(count);
+			for (int i = 0; i < count; i++) {
+				file >> vertices[i].x >> vertices[i].y >> vertices[i].z;
+			}
+		}
+		else if (keyword == "POLYGONS") {
+			faces.clear();
+			int facesSize, totalSize;
+			ss >> facesSize >> totalSize;
+			for (int i = 0; i < facesSize; i++) {
+				int face_vert;
+				file >> face_vert;
+				if (face_vert == 3) {
+					Triangle t;
+					file >> t.vertex_indexes[0] >> t.vertex_indexes[1] >> t.vertex_indexes[2];
+					faces.push_back(t);
+				}
+			}
+		}
+	}
+	file.close();
+	return !vertices.empty();
 }
