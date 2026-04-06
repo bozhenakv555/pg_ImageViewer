@@ -13,4 +13,6 @@ class Model3D {
 public:
 	std::vector<Point3D> vertices;
 	std::vector<Triangle> faces;
+
+	void createCube(double a);
 };
