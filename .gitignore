@@ -369,3 +369,18 @@ release/
 ipch/
 *.aps
 *.ncb
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeSettings.json
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+_CPack_Packages/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+*.cmake
+CMakeLists.txt.user
+
+
