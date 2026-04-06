@@ -1,5 +1,6 @@
 #pragma once
 #include<vector>
+#include <QString>
 
 struct Point3D {
 	double x, y, z;
@@ -23,4 +24,6 @@ public:
 	std::vector<Triangle> faces;
 
 	void createCube(double a);
+
+	bool saveToVTK(QString filename);
 };

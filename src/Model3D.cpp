@@ -1,4 +1,6 @@
 #include "Model3D.h"
+#include <string>
+#include <fstream>
 
 void Model3D::createCube(double a) {
 	vertices.clear();
@@ -35,5 +37,30 @@ void Model3D::createCube(double a) {
 	addFace(1, 6, 5);
 	//lava stena z=-a (diag: 3-6)
 	addFace(3, 7, 6);
-	addFace(3, 6, 7);
+	addFace(3, 6, 2);
+}
+
+bool Model3D::saveToVTK(QString filename) {
+	std::string path = filename.toStdString();
+	std::ofstream file(path);
+	if (!file.is_open()) {
+		return false;
+	}
+	file << "# vtk DataFile Version 3.0" << "\n";
+	file << "meow kocka" << "\n";
+	file << "ASCII" << "\n";
+	file << "DATASET POLYDATA" << "\n";
+	file << "POINTS " << vertices.size() << " double" << "\n";
+	for (const Point3D& v : vertices) {
+		file << v.x << " " << v.y << " " << v.z << "\n";
+	}
+	file << "POLYGONS " << faces.size() << " " << faces.size() * 4 << "\n";
+	for (const Triangle& f : faces) {
+		file << "3 " 
+			<< f.vertex_indexes[0] << " "
+			<< f.vertex_indexes[1] << " "
+			<< f.vertex_indexes[2] << "\n";
+	}
+	file.close();
+	return true;
 }

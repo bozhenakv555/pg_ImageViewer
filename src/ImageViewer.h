@@ -4,6 +4,7 @@
 #include <QtWidgets>
 #include "ui_ImageViewer.h"
 #include "ViewerWidget.h"
+#include "Model3D.h"
 
 class ImageViewer : public QMainWindow
 {
@@ -27,6 +28,7 @@ private:
 	std::vector<double> hermiteVectorAngles; 
 	double hermiteVectorLength = 150.0; 
 	int currentPointIndex = -1;
+	Model3D model3D;
 
 	//Event filters
 	bool eventFilter(QObject* obj, QEvent* event);
@@ -52,6 +54,7 @@ private slots:
 	void on_actionSave_as_triggered();
 	void on_actionClear_triggered();
 	void on_actionExit_triggered();
+	void on_actionSave_3D_to_VTK_triggered();
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
@@ -70,4 +73,8 @@ public slots:
 	void on_dsbVectorLength_valueChanged(double value);
 	void on_sbPointIndex_valueChanged(int i);
 	//void resetAllButtonsExcept(QToolButton* keep); -> //ui->toolButton->setChecked(ui->toolButton == keep); pre kazdy -> potom v kazdom slote pre draw toolbuttony prvym riadkom
+
+	void on_tbCreateCube_clicked();
+
+
 };

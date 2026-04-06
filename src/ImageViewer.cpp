@@ -368,6 +368,19 @@ void ImageViewer::on_actionExit_triggered()
 	this->close();
 }
 
+void ImageViewer::on_actionSave_3D_to_VTK_triggered()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, "Save 3D model", "", "VTK files (*.vtk)");
+	if (fileName.isEmpty()) return;
+
+	if (model3D.saveToVTK(fileName)) {
+		QMessageBox::information(this, "Success!", "VTK file was saved!");
+	}
+	else {
+		QMessageBox::critical(this, "Error!", "VTK file was not saved!");
+	}
+}
+
 void ImageViewer::on_pushButtonSetColor_clicked()
 {
 	QColor newColor = QColorDialog::getColor(globalColor, this); //funkcia QColorDialog, na vstup dostane povodnu, vrati novu
@@ -534,6 +547,7 @@ void ImageViewer::on_sbPointIndex_valueChanged(int i) {
 	}
 }
 
+
 void ImageViewer::on_dsbVectorAngle_valueChanged(double value) {
 	//ak mame vybraty nejaky bod, prepiseme mu uhol v poli a prekreslime
 	if (currentPointIndex >= 0 && currentPointIndex < hermiteVectorAngles.size()) {
@@ -550,3 +564,11 @@ void ImageViewer::on_dsbVectorLength_valueChanged(double value) {
 	vW->drawHermiteCurve(hermiteVectorAngles, hermiteVectorLength, globalColor); //prekreslime celu krivku s novou dlzkou
 	vW->update();
 }
+
+void ImageViewer::on_tbCreateCube_clicked()
+{
+	double size = ui->dsbCubeSize->value();
+	model3D.createCube(size);
+	QMessageBox::information(this, "Cube", "Cube was created successfully!");
+}
+
