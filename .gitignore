@@ -382,5 +382,6 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 *.cmake
 CMakeLists.txt.user
-
+CMakePresets.json
+CMakeUserPresets.json
 
