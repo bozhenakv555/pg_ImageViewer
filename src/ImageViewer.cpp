@@ -568,6 +568,10 @@ void ImageViewer::on_dsbVectorLength_valueChanged(double value) {
 void ImageViewer::on_tbCreateCube_clicked()
 {
 	double size = ui->dsbCubeSize->value();
+	if (size <= 0) {
+		QMessageBox::warning(this, "Error", "Enter a valid parameter");
+		return;
+	}
 	model3D.createCube(size);
 	QMessageBox::information(this, "Cube", "Cube was created successfully!");
 }
@@ -577,6 +581,10 @@ void ImageViewer::on_tbCreateUVSphere_clicked()
 	int P = ui->sbParallels->value();
 	int M = ui->sbMeridians->value();
 	double radius = ui->dsbRadius->value();
+	if (P < 3 || M < 3 || radius <= 0) {
+		QMessageBox::warning(this, "Error", "Enter valid parameters");
+		return;
+	}
 	model3D.createUVSphere(P, M, radius);
 	QMessageBox::information(this, "Sphere", "UV Sphere was created successfully!");
 }
