@@ -75,6 +75,7 @@ public slots:
 	//void resetAllButtonsExcept(QToolButton* keep); -> //ui->toolButton->setChecked(ui->toolButton == keep); pre kazdy -> potom v kazdom slote pre draw toolbuttony prvym riadkom
 
 	void on_tbCreateCube_clicked();
+	void on_tbCreateUVSphere_clicked();
 
 
 };

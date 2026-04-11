@@ -572,3 +572,12 @@ void ImageViewer::on_tbCreateCube_clicked()
 	QMessageBox::information(this, "Cube", "Cube was created successfully!");
 }
 
+void ImageViewer::on_tbCreateUVSphere_clicked()
+{
+	int P = ui->sbParallels->value();
+	int M = ui->sbMeridians->value();
+	double radius = ui->dsbRadius->value();
+	model3D.createUVSphere(P, M, radius);
+	QMessageBox::information(this, "Sphere", "UV Sphere was created successfully!");
+}
+

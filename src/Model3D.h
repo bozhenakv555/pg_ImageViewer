@@ -25,6 +25,8 @@ public:
 
 	void createCube(double a);
 
+	void createUVSphere(int P, int M, double r);
+
 	bool saveToVTK(QString filename);
 	bool loadFromVTK(QString filename);
 };

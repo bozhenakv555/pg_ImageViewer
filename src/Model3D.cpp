@@ -2,7 +2,10 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <math.h>
+
 
 void Model3D::createCube(double a) {
 	vertices.clear();
@@ -42,17 +45,17 @@ void Model3D::createCube(double a) {
 	addFace(3, 6, 2);
 }
 
-void Model3D::createSphere(int P, int M, double r)
+void Model3D::createUVSphere(int P, int M, double r)
 {
 	vertices.clear();
 	faces.clear();
 
 	//definicia bodov mriezky
 	double dtheta = M_PI / P;
-	double dphi = 2*M_PI / M;
+	double dphi = 2 * M_PI / M;
 	for (int i = 0; i <= P; i++) {
 		double theta = i*dtheta;
-		for (int j = 0; j <= M; i++) {
+		for (int j = 0; j <= M; j++) {
 			double phi = j * dphi;
 
 			double x = r * sin(theta) * cos(phi);
@@ -62,6 +65,21 @@ void Model3D::createSphere(int P, int M, double r)
 			vertices.push_back({ x,y,z });
 		}
 	}
+	//triangulacia (prisne < P, M - zastavime pred poslednym stlpcom, aby neist out of bounds
+	for (int i = 0; i < P; i++) {
+		for (int j = 0; j < M; j++) {
+			//indexy bodov jedneho stvoruholnika, krory budem delit na trojugolniky diagonalou top_left-bot_right
+			//index=i(M+1)j
+			int top_left = i * (M + 1) + j; //zaciname odtialto
+			int top_right = i * (M + 1) + (j + 1); //ideme o "jeden stlpec(j) doprava"
+			int bot_left = (i + 1) * (M + 1) + j; //ideme o "jeden riadok(i) dole" (+1 lebo y smeruje zhora-dole)
+			int bot_right = (i + 1) * (M + 1) + (j + 1);
+
+			addFace(top_left, bot_left, bot_right);
+			addFace(top_left, bot_right, top_right);
+		}
+	}
+
 }
 
 bool Model3D::saveToVTK(QString filename) {
@@ -71,7 +89,7 @@ bool Model3D::saveToVTK(QString filename) {
 		return false;
 	}
 	file << "# vtk DataFile Version 3.0" << "\n";
-	file << "meow kocka" << "\n";
+	file << "3D object generated meow" << "\n";
 	file << "ASCII" << "\n";
 	file << "DATASET POLYDATA" << "\n";
 	file << "POINTS " << vertices.size() << " double" << "\n";
