@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <math.h>
 
 void Model3D::createCube(double a) {
 	vertices.clear();
@@ -39,6 +40,28 @@ void Model3D::createCube(double a) {
 	//lava stena z=-a (diag: 3-6)
 	addFace(3, 7, 6);
 	addFace(3, 6, 2);
+}
+
+void Model3D::createSphere(int P, int M, double r)
+{
+	vertices.clear();
+	faces.clear();
+
+	//definicia bodov mriezky
+	double dtheta = M_PI / P;
+	double dphi = 2*M_PI / M;
+	for (int i = 0; i <= P; i++) {
+		double theta = i*dtheta;
+		for (int j = 0; j <= M; i++) {
+			double phi = j * dphi;
+
+			double x = r * sin(theta) * cos(phi);
+			double y = r * cos(theta);
+			double z = r * sin(theta) * sin(phi);
+
+			vertices.push_back({ x,y,z });
+		}
+	}
 }
 
 bool Model3D::saveToVTK(QString filename) {

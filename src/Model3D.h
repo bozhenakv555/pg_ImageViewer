@@ -26,4 +26,5 @@ public:
 	void createCube(double a);
 
 	bool saveToVTK(QString filename);
+	bool loadFromVTK(QString filename);
 };
