@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <math.h>
@@ -145,4 +146,39 @@ bool Model3D::loadFromVTK(QString filename)
 	}
 	file.close();
 	return !vertices.empty();
+}
+
+void Model3D::draw3DModel(Model3D model, double phi, double theta, int algorithm_type, int representation_type)
+{
+	if (model.vertices.empty()) return;
+
+
+	//Transformacia do pohladovej suradnicovej sustavy (View Space asi). Ju tvoria: suradnice vsetkych objektov v scene, pozicia kamery, priemetna, orientacia kamery
+	Point3D n, u, v; //pozicia kamery tvorena troma bazovymi vektormi 
+
+	//n je znormovany normalovy vektor priemetne
+	n.x = sin(theta) * sin(phi);
+	n.y = sin(theta) * cos(phi);
+	n.z = cos(theta);
+
+	//u je vektor kolmy na n (takze iba pridame 90 stupnov k uhlu) - uruje orientaciu kamery(zmena or. je rotacia v priemetne)
+	u.x = sin(theta + M_PI / 2) * sin(phi);
+	u.y = sin(theta + M_PI / 2) * cos(phi);
+	u.z = cos(theta + M_PI / 2);
+
+	//v je vektor kolmy na u a v - ziskame vektorovym sucinom
+	v.x = u.y * n.z - u.z * n.y;
+	v.y = u.z * n.x - u.x * n.z;
+	v.z = u.x * n.y - u.y * n.x;
+
+	std::vector<Point3D> viewPoints;
+
+	for (const Point3D& P : model.vertices) {
+		Point3D viewPoint;
+		viewPoint.x = P.x * v.x + P.y * v.y + P.z * v.z;
+		viewPoint.y = P.x * u.x + P.y * u.y + P.z * u.z;
+		viewPoint.z = P.x * n.x + P.y * n.y + P.z * n.z;
+
+		viewPoints.push_back(viewPoint);
+	}
 }
