@@ -973,7 +973,7 @@ void ViewerWidget::drawBSplineCurve(QColor color)
 }
 
 
-void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz)
+void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R)
 {
 	if (model.vertices.empty()) return;
 
@@ -1008,7 +1008,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 	}
 
 	std::vector<QPoint> projectedPoints;
-	int scale = 10; //pre viditelnost, iba skusam
+	int scale = 1; //pre viditelnost, iba skusam
 	double centerX = getImgWidth() / 2.0; //aby objekt bol v strede obrazovky, nie v (0,0) (lavom hornom rohu)
 	double centerY = getImgHeight() / 2.0;
 
@@ -1022,9 +1022,19 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 			projectedPoints.push_back(QPoint(qRound(x_proj), qRound(y_proj)));
 		}
 		else if (projection_type == 1) { //perspektivne priemetanie
-			x_proj = centerX + ((dz * VP.x) / VP.z)*scale;
-			y_proj = centerY - ((dz * VP.y) / VP.z)*scale;
-			projectedPoints.push_back(QPoint(qRound(x_proj), qRound(y_proj)));
+			double point_distance = R - VP.z;
+			//R je vzdialenost kamery od objektu, v podstate radius tej sfery, v strede ktorej sa nachadza nas objekt
+			//dz je vzdialenost kamery od priemetne - obrazovky
+			//point_distance je vzdialenost kamery od jednotlivych bodov objektu
+			if (point_distance > 0.1) { //0.1 je minimalna vzdialenost konkretneho bodu od nasho "oka" aby bod bol viditelny
+				x_proj = centerX + ((dz * VP.x) / point_distance);
+				y_proj = centerY - ((dz * VP.y) / point_distance);
+				projectedPoints.push_back(QPoint(qRound(x_proj), qRound(y_proj)));
+			}
+			else {
+				//ak je bod prilis blizko, pridame "mimo" suradnice, aby sa zachoval pocet bodov v poli, ale nic sa nevykreslilo
+				projectedPoints.push_back(QPoint(-10000, -10000));
+			}
 		}
 	}
 

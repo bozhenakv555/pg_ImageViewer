@@ -606,18 +606,35 @@
                     <property name="title">
                      <string/>
                     </property>
-                    <layout class="QHBoxLayout" name="horizontalLayout_16">
-                     <item>
-                      <widget class="QLabel" name="label_13">
+                    <layout class="QGridLayout" name="gridLayout_4">
+                     <item row="2" column="0">
+                      <widget class="QLabel" name="label_14">
                        <property name="text">
-                        <string>Distance (dz)</string>
+                        <string>Viewer distance (R)</string>
                        </property>
                       </widget>
                      </item>
-                     <item>
+                     <item row="0" column="2">
                       <widget class="QDoubleSpinBox" name="dsb_distance">
                        <property name="minimum">
                         <double>0.100000000000000</double>
+                       </property>
+                       <property name="maximum">
+                        <double>1500.000000000000000</double>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="0" column="0">
+                      <widget class="QLabel" name="label_13">
+                       <property name="text">
+                        <string>Projection Plane Distance (dz)</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="2">
+                      <widget class="QDoubleSpinBox" name="dsb_viewerDistance">
+                       <property name="minimum">
+                        <double>1.000000000000000</double>
                        </property>
                        <property name="maximum">
                         <double>1500.000000000000000</double>

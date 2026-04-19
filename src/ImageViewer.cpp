@@ -586,10 +586,11 @@ void ImageViewer::render3D()
 	double theta = ui->sliderZenith_theta->value() * (M_PI / 180.0);
 	double phi = ui->sliderAzimuth_phi->value() * (M_PI / 180.0);
 	double dz = ui->dsb_distance->value();
+	double R = ui->dsb_viewerDistance->value();
 	int projectionType = ui->cb_projectionType->currentIndex();
 	int representationType = ui->chbFill3D->isChecked() ? 1 : 0;
 
-	vW->draw3DModel(model3D, phi, theta, projectionType, representationType, dz);
+	vW->draw3DModel(model3D, phi, theta, projectionType, representationType, dz, R);
 
 	vW->update();
 }
