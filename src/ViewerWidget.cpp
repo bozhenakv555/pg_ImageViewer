@@ -972,6 +972,97 @@ void ViewerWidget::drawBSplineCurve(QColor color)
 	}
 }
 
+
+void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz)
+{
+	if (model.vertices.empty()) return;
+
+
+	//Transformacia do pohladovej suradnicovej sustavy (View Space asi). Ju tvoria: suradnice vsetkych objektov v scene, pozicia kamery, priemetna, orientacia kamery
+	Point3D n, u, v; //pozicia kamery tvorena troma bazovymi vektormi 
+
+	//n je znormovany normalovy vektor priemetne
+	n.x = sin(theta) * sin(phi);
+	n.y = sin(theta) * cos(phi);
+	n.z = cos(theta);
+
+	//u je vektor kolmy na n (takze iba pridame 90 stupnov k uhlu) - uruje orientaciu kamery(zmena or. je rotacia v priemetne)
+	u.x = sin(theta + M_PI / 2) * sin(phi);
+	u.y = sin(theta + M_PI / 2) * cos(phi);
+	u.z = cos(theta + M_PI / 2);
+
+	//v je vektor kolmy na u a v - ziskame vektorovym sucinom
+	v.x = u.y * n.z - u.z * n.y;
+	v.y = u.z * n.x - u.x * n.z;
+	v.z = u.x * n.y - u.y * n.x;
+
+	std::vector<Point3D> viewSpacePoints;
+
+	for (const Point3D& P : model.vertices) {
+		Point3D viewPoint;
+		viewPoint.x = P.x * v.x + P.y * v.y + P.z * v.z;
+		viewPoint.y = P.x * u.x + P.y * u.y + P.z * u.z;
+		viewPoint.z = P.x * n.x + P.y * n.y + P.z * n.z;
+
+		viewSpacePoints.push_back(viewPoint);
+	}
+
+	std::vector<QPoint> projectedPoints;
+	int scale = 10; //pre viditelnost, iba skusam
+	double centerX = getImgWidth() / 2.0; //aby objekt bol v strede obrazovky, nie v (0,0) (lavom hornom rohu)
+	double centerY = getImgHeight() / 2.0;
+
+	for (const Point3D& VP : viewSpacePoints) {
+		float x_proj, y_proj;
+	
+		//z_proj = 0, ale pamatame si povodne z pre z-buffer asi
+		if (projection_type == 0) { //rovnobezne priemetanie
+			x_proj = centerX + VP.x * scale;
+			y_proj = centerY - VP.y * scale;
+			projectedPoints.push_back(QPoint(qRound(x_proj), qRound(y_proj)));
+		}
+		else if (projection_type == 1) { //perspektivne priemetanie
+			x_proj = centerX + ((dz * VP.x) / VP.z)*scale;
+			y_proj = centerY - ((dz * VP.y) / VP.z)*scale;
+			projectedPoints.push_back(QPoint(qRound(x_proj), qRound(y_proj)));
+		}
+	}
+
+	//Vykreslenie plosok
+	for (const Triangle& t : model.faces) {
+		//ziskame "sprojektovane" - 2D body trojuholnikov
+		std::vector<QPoint> facePoints = {
+			projectedPoints[t.vertex_indexes[0]],
+			projectedPoints[t.vertex_indexes[1]],
+			projectedPoints[t.vertex_indexes[2]]
+		};
+		std::vector<QPoint> clipped = clipSutherlandHodgman(facePoints);
+
+		if (representation_type == 0) { //Wireframe
+			for (size_t i = 0; i < clipped.size(); i++) {
+				QPoint p1 = clipped[i];
+				QPoint p2;
+				if (i == clipped.size() - 1) {
+					p2 = clipped[0];
+				}
+				else {
+					p2 = clipped[i + 1];
+				}
+				drawLineDDA(p1, p2, Qt::black);
+			}
+		}
+
+	//test bez orezavania
+	//	QPoint p1 = projectedPoints[t.vertex_indexes[0]];
+	//	QPoint p2 = projectedPoints[t.vertex_indexes[1]];
+	//	QPoint p3 = projectedPoints[t.vertex_indexes[2]];
+
+	//	drawLineDDA(p1, p2, Qt::black);
+	//	drawLineDDA(p2, p3, Qt::black);
+	//	drawLineDDA(p3, p1, Qt::black);
+	}
+}
+
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
 {

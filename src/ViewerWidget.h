@@ -1,5 +1,6 @@
 #pragma once
 #include <QtWidgets>
+#include "Model3D.h"
 
 struct Vertex {
 	QPoint pos;
@@ -138,6 +139,10 @@ public:
 	void drawBSplineCurve(QColor color);
 	void addBSplinePoint(QPoint p) { bSplinePoints.push_back(p); };
 	std::vector<QPoint>& getBSplinePoints() { return bSplinePoints; }
+
+	//3D
+	void draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz);
+
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

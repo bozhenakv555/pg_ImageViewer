@@ -368,19 +368,6 @@ void ImageViewer::on_actionExit_triggered()
 	this->close();
 }
 
-void ImageViewer::on_actionSave_3D_to_VTK_triggered()
-{
-	QString fileName = QFileDialog::getSaveFileName(this, "Save 3D model", "", "VTK files (*.vtk)");
-	if (fileName.isEmpty()) return;
-
-	if (model3D.saveToVTK(fileName)) {
-		QMessageBox::information(this, "Success!", "VTK file was saved!");
-	}
-	else {
-		QMessageBox::critical(this, "Error!", "VTK file was not saved!");
-	}
-}
-
 void ImageViewer::on_pushButtonSetColor_clicked()
 {
 	QColor newColor = QColorDialog::getColor(globalColor, this); //funkcia QColorDialog, na vstup dostane povodnu, vrati novu
@@ -565,6 +552,8 @@ void ImageViewer::on_dsbVectorLength_valueChanged(double value) {
 	vW->update();
 }
 
+//3D BUDE CELE DOLE, LEBO SA STRACAM))
+
 void ImageViewer::on_tbCreateCube_clicked()
 {
 	double size = ui->dsbCubeSize->value();
@@ -574,6 +563,7 @@ void ImageViewer::on_tbCreateCube_clicked()
 	}
 	model3D.createCube(size);
 	QMessageBox::information(this, "Cube", "Cube was created successfully!");
+	render3D();
 }
 
 void ImageViewer::on_tbCreateUVSphere_clicked()
@@ -587,5 +577,68 @@ void ImageViewer::on_tbCreateUVSphere_clicked()
 	}
 	model3D.createUVSphere(P, M, radius);
 	QMessageBox::information(this, "Sphere", "UV Sphere was created successfully!");
+}
+
+
+void ImageViewer::render3D()
+{
+	vW->clear();
+	double theta = ui->sliderZenith_theta->value() * (M_PI / 180.0);
+	double phi = ui->sliderAzimuth_phi->value() * (M_PI / 180.0);
+	double dz = ui->dsb_distance->value();
+	int projectionType = ui->cb_projectionType->currentIndex();
+	int representationType = ui->chbFill3D->isChecked() ? 1 : 0;
+
+	vW->draw3DModel(model3D, phi, theta, projectionType, representationType, dz);
+
+	vW->update();
+}
+
+void ImageViewer::on_actionSave_3D_to_VTK_triggered()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, "Save 3D model", "", "VTK files (*.vtk)");
+	if (fileName.isEmpty()) return;
+
+	if (model3D.saveToVTK(fileName)) {
+		QMessageBox::information(this, "Success!", "VTK file was saved!");
+	}
+	else {
+		QMessageBox::critical(this, "Error!", "VTK file was not saved!");
+	}
+}
+
+void ImageViewer::on_actionLoad_3D_from_VTK_triggered()
+{
+	QString fileName = QFileDialog::getOpenFileName(this,
+		tr("Open VTK Model"), "", tr("VTK Files (*.vtk);;All Files (*)"));
+
+	if (fileName.isEmpty()) {
+		return;
+	}
+
+	if (model3D.loadFromVTK(fileName)) {
+		QMessageBox::information(this, "Success!", "VTK file was loaded!");
+		render3D();
+
+	}
+	else {
+		QMessageBox::critical(this, "Error!", "Could not load VTK file");
+	}
+
+}
+
+void ImageViewer::on_sliderZenith_theta_valueChanged(int value)
+{
+	render3D();
+}
+
+void ImageViewer::on_sliderAzimuth_phi_valueChanged(int value)
+{
+	render3D();
+}
+
+void ImageViewer::on_dsb_distance_valueChanged(double value)
+{
+	render3D();
 }
 

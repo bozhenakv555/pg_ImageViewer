@@ -49,12 +49,19 @@ private:
 	bool openImage(QString filename);
 	bool saveImage(QString filename);
 
+	void render3D();
+
 private slots:
 	void on_actionOpen_triggered();
 	void on_actionSave_as_triggered();
 	void on_actionClear_triggered();
 	void on_actionExit_triggered();
 	void on_actionSave_3D_to_VTK_triggered();
+	void on_actionLoad_3D_from_VTK_triggered();
+
+	void on_sliderZenith_theta_valueChanged(int value);
+	void on_sliderAzimuth_phi_valueChanged(int value);
+	void on_dsb_distance_valueChanged(double value);
 
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
