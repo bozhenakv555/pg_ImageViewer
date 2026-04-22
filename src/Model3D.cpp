@@ -7,6 +7,7 @@
 #include <cmath>
 #include <math.h>
 #include <QPoint>
+#include <QRandomGenerator>
 
 void Model3D::createCube(double a) {
 	vertices.clear();
@@ -44,6 +45,12 @@ void Model3D::createCube(double a) {
 	//lava stena z=-a (diag: 3-6)
 	addFace(3, 7, 6);
 	addFace(3, 6, 2);
+
+	for (size_t i = 0; i < faces.size(); i++) {
+		facesColors.push_back(QColor(QRandomGenerator::global()->bounded(256),
+			QRandomGenerator::global()->bounded(256),
+			QRandomGenerator::global()->bounded(256)));
+	}
 }
 
 void Model3D::createUVSphere(int P, int M, double r)
@@ -145,6 +152,11 @@ bool Model3D::loadFromVTK(QString filename)
 		}
 	}
 	file.close();
+	for (size_t i = 0; i < faces.size(); i++) {
+		facesColors.push_back(QColor(QRandomGenerator::global()->bounded(256),
+			QRandomGenerator::global()->bounded(256),
+			QRandomGenerator::global()->bounded(256)));
+	}
 	return !vertices.empty();
 }
 

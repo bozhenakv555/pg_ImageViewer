@@ -577,6 +577,7 @@ void ImageViewer::on_tbCreateUVSphere_clicked()
 	}
 	model3D.createUVSphere(P, M, radius);
 	QMessageBox::information(this, "Sphere", "UV Sphere was created successfully!");
+	render3D();
 }
 
 
@@ -586,7 +587,7 @@ void ImageViewer::render3D()
 	double theta = ui->sliderZenith_theta->value() * (M_PI / 180.0);
 	double phi = ui->sliderAzimuth_phi->value() * (M_PI / 180.0);
 	double dz = ui->dsb_distance->value();
-	double R = ui->dsb_viewerDistance->value();
+	double R = ui->dsb_cameraDistance->value();
 	int projectionType = ui->cb_projectionType->currentIndex();
 	int representationType = ui->chbFill3D->isChecked() ? 1 : 0;
 

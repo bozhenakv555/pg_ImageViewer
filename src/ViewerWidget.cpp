@@ -977,6 +977,18 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 {
 	if (model.vertices.empty()) return;
 
+	//"Z-pole": vycistame staru pamat a vytvarame novu mriezku
+	zBuffer.clear();
+	int w = img->width();
+	int h = img->height();
+	for (int y = 0; y < h; y++) {
+		std::vector<double> row; // jeden riadok
+		for (int x = 0; x < w; x++) {
+			row.push_back(-DBL_MAX);  // naplnime -nekonecnami
+		}
+		zBuffer.push_back(row); // vlozime riadok do mriezky - hlaneho pola
+
+	}
 
 	//Transformacia do pohladovej suradnicovej sustavy (View Space asi). Ju tvoria: suradnice vsetkych objektov v scene, pozicia kamery, priemetna, orientacia kamery
 	Point3D n, u, v; //pozicia kamery tvorena troma bazovymi vektormi 
@@ -1002,7 +1014,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 		Point3D viewPoint;
 		viewPoint.x = P.x * v.x + P.y * v.y + P.z * v.z;
 		viewPoint.y = P.x * u.x + P.y * u.y + P.z * u.z;
-		viewPoint.z = P.x * n.x + P.y * n.y + P.z * n.z;
+		viewPoint.z = P.x * n.x + P.y * n.y + P.z * n.z-R;
 
 		viewSpacePoints.push_back(viewPoint);
 	}
@@ -1022,17 +1034,17 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 			projectedPoints.push_back(QPoint(qRound(x_proj), qRound(y_proj)));
 		}
 		else if (projection_type == 1) { //perspektivne priemetanie
-			double point_distance = R - VP.z;
-			//R je vzdialenost kamery od objektu, v podstate radius tej sfery, v strede ktorej sa nachadza nas objekt
-			//dz je vzdialenost kamery od priemetne - obrazovky
-			//point_distance je vzdialenost kamery od jednotlivych bodov objektu
-			if (point_distance > 0.1) { //0.1 je minimalna vzdialenost konkretneho bodu od nasho "oka" aby bod bol viditelny
-				x_proj = centerX + ((dz * VP.x) / point_distance);
-				y_proj = centerY - ((dz * VP.y) / point_distance);
+			// VP.z je hlbka bodu v pohladovej sustave (View Space), ma v sebe zapocitany posun R (vzdialenost kamery od stredu sceny (aj objektu na zaciatku) - (0,0,0), kamera sa pohybuje po sfere s radiusom R)
+			// takze VP.z hovori, ako daleko je bod skutocne (do priemetania) od kamery
+			if (VP.z < -0.1) { // kontrola, ci je bod pred kamerou (velmi blizko alebo dalej) (kladny smer osi z je na pozorovatela)
+				//dz (plane distance - vzdialenost kamery od priemetne) -> zvacsuje/zmensuje cely obraz (ako zoom) - POSUN PRIEMETNE OD KAMERE(0,0,0) V ZAPORNOM SMERE - LEBO KAMERA TAM POZERA, TEDA JE ZAPORNE, AK UVAZUJEME AKO SURADNICU PRIEMETNE
+				//VP.z (hlbka) -> cim je vacsia, tym je bod blizsie k stredu (mensi objekt)
+				x_proj = centerX + ((-dz * VP.x) / VP.z);
+				y_proj = centerY - ((-dz * VP.y) / VP.z);
 				projectedPoints.push_back(QPoint(qRound(x_proj), qRound(y_proj)));
 			}
 			else {
-				//ak je bod prilis blizko, pridame "mimo" suradnice, aby sa zachoval pocet bodov v poli, ale nic sa nevykreslilo
+				//ak je bod za kamerou alebo uz prilis blizko, pridame "mimo" suradnice, aby sedelpocet bodov v poli, ale nic sa nevykreslilo
 				projectedPoints.push_back(QPoint(-10000, -10000));
 			}
 		}
@@ -1070,6 +1082,10 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 	//	drawLineDDA(p1, p2, Qt::black);
 	//	drawLineDDA(p2, p3, Qt::black);
 	//	drawLineDDA(p3, p1, Qt::black);
+	}
+
+	for (int i = 0; i < model.faces.size(); i++) {
+		QColor faceColor = model.facesColors[i];
 	}
 }
 

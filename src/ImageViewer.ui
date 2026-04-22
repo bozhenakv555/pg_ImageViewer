@@ -610,7 +610,7 @@
                      <item row="2" column="0">
                       <widget class="QLabel" name="label_14">
                        <property name="text">
-                        <string>Viewer distance (R)</string>
+                        <string>Camera distance (R)</string>
                        </property>
                       </widget>
                      </item>
@@ -632,7 +632,7 @@
                       </widget>
                      </item>
                      <item row="2" column="2">
-                      <widget class="QDoubleSpinBox" name="dsb_viewerDistance">
+                      <widget class="QDoubleSpinBox" name="dsb_cameraDistance">
                        <property name="minimum">
                         <double>1.000000000000000</double>
                        </property>
@@ -660,7 +660,7 @@
                      <item>
                       <widget class="QSlider" name="sliderZenith_theta">
                        <property name="minimum">
-                        <number>-90</number>
+                        <number>-91</number>
                        </property>
                        <property name="maximum">
                         <number>90</number>

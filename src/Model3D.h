@@ -1,6 +1,7 @@
 #pragma once
 #include<vector>
 #include <QString>
+#include <QColor>
 
 struct Point3D {
 	double x, y, z;
@@ -22,6 +23,7 @@ private:
 public:
 	std::vector<Point3D> vertices;
 	std::vector<Triangle> faces;
+	std::vector<QColor> facesColors;
 
 	void createCube(double a);
 

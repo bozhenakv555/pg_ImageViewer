@@ -5,6 +5,7 @@
 struct Vertex {
 	QPoint pos;
 	QColor color;
+	double z;
 };
 
 class ViewerWidget :public QWidget {
@@ -34,6 +35,8 @@ private:
 	std::vector<QPoint> hermitePoints;
 	std::vector<QPoint> bezierPoints;
 	std::vector<QPoint> bSplinePoints;
+
+	std::vector<std::vector<double>> zBuffer;
 
 public:
 	ViewerWidget(QSize imgSize, QWidget* parent = Q_NULLPTR);
