@@ -59,10 +59,6 @@ private slots:
 	void on_actionSave_3D_to_VTK_triggered();
 	void on_actionLoad_3D_from_VTK_triggered();
 
-	void on_sliderZenith_theta_valueChanged(int value);
-	void on_sliderAzimuth_phi_valueChanged(int value);
-	void on_dsb_distance_valueChanged(double value);
-
 	//Tools slots
 	void on_pushButtonSetColor_clicked();
 public slots:
@@ -83,6 +79,8 @@ public slots:
 
 	void on_tbCreateCube_clicked();
 	void on_tbCreateUVSphere_clicked();
-
-
+	
+	void on_sliderZenith_theta_valueChanged(int value);
+	void on_sliderAzimuth_phi_valueChanged(int value);
+	void on_dsb_distance_valueChanged(double value);
 };

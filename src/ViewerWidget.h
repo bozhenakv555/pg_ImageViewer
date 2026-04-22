@@ -5,6 +5,11 @@
 struct Vertex {
 	QPoint pos;
 	QColor color;
+};
+
+struct ProjectedVertex {
+	QPoint pos;
+	QColor color;
 	double z;
 };
 
@@ -73,7 +78,7 @@ public:
 	void clearAll();
 
 	//Algorithms
-	void drawLineDDA(QPoint start, QPoint end, QColor color);
+	void drawLineDDA(QPoint start, QPoint end, double z, QColor color);
 	void drawLineBresenham(QPoint start, QPoint end, QColor color);
 
 	void drawCircleBresenham(QPoint center, QPoint edge, QColor color);
@@ -110,7 +115,7 @@ public:
 	std::vector<QPoint> clipCyrusBeck(QPoint P1, QPoint P2);
 
 	//vyplnanie
-	void fillScanLine(std::vector<QPoint> points, QColor color);
+	void fillScanLine(std::vector<QPoint> points, double z, QColor color);
 
 	void fillTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType);
 	void fillTrianglePart(int y1, int y2, double x1, double x2, double w1, double w2, int fillType);
@@ -145,7 +150,7 @@ public:
 
 	//3D
 	void draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R);
-
+	void setPixelZ(int x, int y, double z, QColor& color);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

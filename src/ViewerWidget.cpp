@@ -131,7 +131,7 @@ void ViewerWidget::drawLine(QPoint start, QPoint end, QColor color, int algType)
 	QPoint p2 = clipped[1];
 
 	if (algType == 0) {
-		drawLineDDA(p1, p2, color);
+		drawLineDDA(p1, p2, 0, color);
 	}
 	else {
 		drawLineBresenham(p1, p2, color);
@@ -164,7 +164,7 @@ void ViewerWidget::clearAll()
 	clear(); //vymazeme samotne biele platno (img->fill)
 }
 
-void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
+void ViewerWidget::drawLineDDA(QPoint start, QPoint end, double z, QColor color)
 {
 	double x1 = start.x();
 	double y1 = start.y();
@@ -177,7 +177,7 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 	double maxDif = std::max(std::abs(dx), std::abs(dy)); //rozmer riadiacej osi - ak y:dy, ak x:dx
 
 	if (maxDif == 0) {
-		setPixel((int)(x1 + 0.5), (int)(y1 + 0.5), color);
+		setPixelZ((int)(x1 + 0.5), (int)(y1 + 0.5), z, color);
 		return;
 	}
 
@@ -185,7 +185,7 @@ void ViewerWidget::drawLineDDA(QPoint start, QPoint end, QColor color)
 	double y_inc = dy / maxDif;
 
 	for (int i = 0; i <= maxDif; i++) {
-		setPixel((int)(x1 + 0.5), (int)(y1 + 0.5), color);
+		setPixelZ((int)(x1 + 0.5), (int)(y1 + 0.5), z, color);
 		x1 += x_inc;
 		y1 += y_inc;
 	}
@@ -324,7 +324,7 @@ void ViewerWidget::drawPolygon(QColor color)
 		}
 		// ak je to standartny polygon, vyplname pomocou ScanLine s orezanymi bodmi
 		else {
-			fillScanLine(pointsToDraw, color);
+			fillScanLine(pointsToDraw, 0, color);
 		}
 
 	}
@@ -553,7 +553,7 @@ std::vector<QPoint> ViewerWidget::clipCyrusBeck(QPoint P1, QPoint P2) {
 	return newpoints;
 }
 
-void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
+void ViewerWidget::fillScanLine(std::vector<QPoint> points, double z, QColor color)
 {
 	if (points.size() < 3) return;
 
@@ -639,7 +639,7 @@ void ViewerWidget::fillScanLine(std::vector<QPoint> points, QColor color)
 
 			if (x_start <= x_end) {
 				for (int x = x_start; x <= x_end; x++) {
-					setPixel(x, y, color);
+					setPixelZ(x, y, z, color);
 				}
 			}
 		}
@@ -977,17 +977,16 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 {
 	if (model.vertices.empty()) return;
 
-	//"Z-pole": vycistame staru pamat a vytvarame novu mriezku
+	//"Z-pole" (Buffer): vycistame staru pamat a vytvarame novu mriezku
 	zBuffer.clear();
 	int w = img->width();
 	int h = img->height();
-	for (int y = 0; y < h; y++) {
-		std::vector<double> row; // jeden riadok
-		for (int x = 0; x < w; x++) {
-			row.push_back(-DBL_MAX);  // naplnime -nekonecnami
+	for (int x = 0; x < w; x++) {
+		std::vector<double> column; //jeden stlpec, jedna hodnota y
+		for (int y = 0; y < h; y++) {
+			column.push_back(-DBL_MAX); //naplnime -nekonecnami
 		}
-		zBuffer.push_back(row); // vlozime riadok do mriezky - hlaneho pola
-
+		zBuffer.push_back(column); //vlozime riadok do mriezky - hlaneho pola
 	}
 
 	//Transformacia do pohladovej suradnicovej sustavy (View Space asi). Ju tvoria: suradnice vsetkych objektov v scene, pozicia kamery, priemetna, orientacia kamery
@@ -1014,7 +1013,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 		Point3D viewPoint;
 		viewPoint.x = P.x * v.x + P.y * v.y + P.z * v.z;
 		viewPoint.y = P.x * u.x + P.y * u.y + P.z * u.z;
-		viewPoint.z = P.x * n.x + P.y * n.y + P.z * n.z-R;
+		viewPoint.z = P.x * n.x + P.y * n.y + P.z * n.z - R;
 
 		viewSpacePoints.push_back(viewPoint);
 	}
@@ -1050,14 +1049,29 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 		}
 	}
 
+
+	for (int i = 0; i < model.faces.size(); i++) {
+		QColor faceColor = model.facesColors[i];
+	}
+
 	//Vykreslenie plosok
-	for (const Triangle& t : model.faces) {
+	for (int i = 0; i < model.faces.size(); i++) {
+		const Triangle& t = model.faces[i];
+		QColor faceColor = model.facesColors[i];
+
 		//ziskame "sprojektovane" - 2D body trojuholnikov
 		std::vector<QPoint> facePoints = {
 			projectedPoints[t.vertex_indexes[0]],
 			projectedPoints[t.vertex_indexes[1]],
 			projectedPoints[t.vertex_indexes[2]]
 		};
+
+		//priemer z = z_i pre buffer
+		double z0 = viewSpacePoints[t.vertex_indexes[0]].z;
+		double z1 = viewSpacePoints[t.vertex_indexes[1]].z;
+		double z2 = viewSpacePoints[t.vertex_indexes[2]].z;
+		double zi = (z0 + z1 + z2) / 3.0;
+
 		std::vector<QPoint> clipped = clipSutherlandHodgman(facePoints);
 
 		if (representation_type == 0) { //Wireframe
@@ -1070,8 +1084,11 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 				else {
 					p2 = clipped[i + 1];
 				}
-				drawLineDDA(p1, p2, Qt::black);
+				drawLineDDA(p1, p2, 0, Qt::black);
 			}
+		}
+		else if (representation_type == 1) { //Filled
+			fillScanLine(clipped, zi, faceColor);
 		}
 
 	//test bez orezavania
@@ -1083,9 +1100,20 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 	//	drawLineDDA(p2, p3, Qt::black);
 	//	drawLineDDA(p3, p1, Qt::black);
 	}
+}
 
-	for (int i = 0; i < model.faces.size(); i++) {
-		QColor faceColor = model.facesColors[i];
+void ViewerWidget::setPixelZ(int x, int y, double z, QColor& color)
+{
+	if (!isInside(x, y)) return;
+
+	if (zBuffer.empty() || zBuffer.size() <= x || zBuffer[0].size() <= y) {
+		setPixel(x, y, color);
+		return;
+	}
+
+	if (zBuffer[x][y] < z) {
+		zBuffer[x][y] = z;
+		setPixel(x, y, color);
 	}
 }
 
