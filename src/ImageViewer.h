@@ -83,4 +83,5 @@ public slots:
 	void on_sliderZenith_theta_valueChanged(int value);
 	void on_sliderAzimuth_phi_valueChanged(int value);
 	void on_dsb_distance_valueChanged(double value);
+	void on_tb_render3D_clicked();
 };

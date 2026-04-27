@@ -1066,11 +1066,16 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 			projectedPoints[t.vertex_indexes[2]]
 		};
 
-		//priemer z = z_i pre buffer
+		//priemer z = z_i pre buffer a tie randomne farby
 		double z0 = viewSpacePoints[t.vertex_indexes[0]].z;
 		double z1 = viewSpacePoints[t.vertex_indexes[1]].z;
 		double z2 = viewSpacePoints[t.vertex_indexes[2]].z;
 		double zi = (z0 + z1 + z2) / 3.0;
+
+		//pre vypocet svetla - ziskame 3D vrcholy plosok
+		Point3D v0 = viewSpacePoints[t.vertex_indexes[0]];
+		Point3D v1 = viewSpacePoints[t.vertex_indexes[1]];
+		Point3D v2 = viewSpacePoints[t.vertex_indexes[2]];
 
 		std::vector<QPoint> clipped = clipSutherlandHodgman(facePoints);
 
@@ -1088,6 +1093,16 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 			}
 		}
 		else if (representation_type == 1) { //Filled
+			fillScanLine(clipped, zi, faceColor);
+		}
+		else if (representation_type == 2) { //flat shading
+			//normala plosky - trojuholnika: vektorovy sucin dvoch hran trojuholnika nam da kolmicu na jeho plochu
+			Vector3D faceNormal = (v1 - v0).cross(v2 - v0);
+			//vypocitame tazisko trojuholnika
+			Point3D center = (v0 + v1 + v2) * (1/3);
+			//vypocitame jednu farbu pre cely trojuholnik
+			QColor faceColor =  calculatePhongColor(center, faceNormal, lp);
+
 			fillScanLine(clipped, zi, faceColor);
 		}
 
@@ -1117,21 +1132,21 @@ void ViewerWidget::setPixelZ(int x, int y, double z, QColor& color)
 	}
 }
 
-Vector3D ViewerWidget::calculateNormal(double phi, double theta)
-{
-	Vector3D n;
-	n.x = sin(theta) * sin(phi);
-	n.y = sin(theta) * cos(phi);
-	n.z = cos(theta);
-	return n;
-}
+//Vector3D ViewerWidget::calculateNormal(double phi, double theta)
+//{
+//	Vector3D n;
+//	n.x = sin(theta) * sin(phi);
+//	n.y = sin(theta) * cos(phi);
+//	n.z = cos(theta);
+//	return n;
+//}
 
-void ViewerWidget::phongLightModel(Point3D point, double phi, double theta, const LightParams& lp)
+QColor ViewerWidget::calculatePhongColor(Point3D point, Vector3D normal, const LightParams& lp)
 {
 	//4 zakladne pre model jednotkove vektory:
 	Vector3D N, L, R, V;
 
-	N = calculateNormal(phi, theta); //normala, uz je jednotkovy vektor - normalizovany
+	N = normal.normalize(); //normala
 	L = (lp.lightPos - point).normalize(); //svetelny luc - jednotkovy vektor z daneho bodu k svetelnemu zdroju
 	//if (LdotN < 0) LdotN = 0; //vtedy svetlo dopada za plochu plosky a intenzita bude 0 - robi to iste, co ten max nizsie:
 	R = (N * 2 * std::max(0.0, L.dot(N)) - L).normalize(); //odrazeny luc - smer, do ktoreho je L odrazeny
@@ -1163,7 +1178,15 @@ void ViewerWidget::phongLightModel(Point3D point, double phi, double theta, cons
 
 	//vysledna intenzita
 	Vector3D I = I_s + I_d + I_a;
+
+	//prevedme I na QColor s orezanim intervalom (0,255)
+	return QColor(
+		qBound(0, (int)I.x, 255),
+		qBound(0, (int)I.y, 255),
+		qBound(0, (int)I.z, 255)
+	);
 }
+
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
 {

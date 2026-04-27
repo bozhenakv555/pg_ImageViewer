@@ -665,4 +665,9 @@ void ImageViewer::on_dsb_distance_valueChanged(double value)
 	render3D();
 }
 
+void ImageViewer::on_tb_render3D_clicked()
+{
+	render3D();
+}
+
 
