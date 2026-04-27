@@ -1049,14 +1049,10 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 		}
 	}
 
-
-	for (int i = 0; i < model.faces.size(); i++) {
-		QColor faceColor = model.facesColors[i];
-	}
-
 	//Vykreslenie plosok
 	for (int i = 0; i < model.faces.size(); i++) {
 		const Triangle& t = model.faces[i];
+
 		QColor faceColor = model.facesColors[i];
 
 		//ziskame "sprojektovane" - 2D body trojuholnikov
@@ -1095,7 +1091,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 		else if (representation_type == 1) { //Filled
 			fillScanLine(clipped, zi, faceColor);
 		}
-		else if (representation_type == 2) { //flat shading
+		else if (representation_type == 2) { //flat shading - jedina normala pre kazdu plosku
 			//normala plosky - trojuholnika: vektorovy sucin dvoch hran trojuholnika nam da kolmicu na jeho plochu
 			Vector3D faceNormal = (v1 - v0).cross(v2 - v0);
 			//vypocitame tazisko trojuholnika
@@ -1105,7 +1101,20 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 
 			fillScanLine(clipped, zi, faceColor);
 		}
+		else if (representation_type == 3) { //nearest neighbor - normala v kazdom z troch vrcholov
+			//vypocitame osvetlenie v kazdom vrchole zvlast
+			QColor c0 = calculatePhongColor(v0, v0, lp);
+			QColor c1 = calculatePhongColor(v1, v1, lp);
+			QColor c2 = calculatePhongColor(v2, v2, lp);
 
+			//vytvorime vertexy (2D pozicia + farba + z-hlbka)
+			Vertex vt0 = { projectedPoints[t.vertex_indexes[0]], c0, v0.z };
+			Vertex vt1 = { projectedPoints[t.vertex_indexes[1]], c1, v1.z };
+			Vertex vt2 = { projectedPoints[t.vertex_indexes[2]], c2, v2.z };
+
+			//posleme do fillTriangle z filltype = 1 - nearest neighbor
+			fillTriangle(vt0, vt1, vt2, 1);
+		}
 	//test bez orezavania
 	//	QPoint p1 = projectedPoints[t.vertex_indexes[0]];
 	//	QPoint p2 = projectedPoints[t.vertex_indexes[1]];

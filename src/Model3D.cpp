@@ -57,6 +57,7 @@ void Model3D::createUVSphere(int P, int M, double r)
 {
 	vertices.clear();
 	faces.clear();
+	facesColors.clear();
 
 	//definicia bodov mriezky
 	double dtheta = M_PI / P;
@@ -86,6 +87,11 @@ void Model3D::createUVSphere(int P, int M, double r)
 			addFace(top_left, bot_left, bot_right);
 			addFace(top_left, bot_right, top_right);
 		}
+	}
+	for (size_t i = 0; i < faces.size(); i++) {
+		facesColors.push_back(QColor(QRandomGenerator::global()->bounded(256),
+			QRandomGenerator::global()->bounded(256),
+			QRandomGenerator::global()->bounded(256)));
 	}
 
 }
