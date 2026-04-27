@@ -589,9 +589,30 @@ void ImageViewer::render3D()
 	double dz = ui->dsb_distance->value();
 	double R = ui->dsb_cameraDistance->value();
 	int projectionType = ui->cb_projectionType->currentIndex();
-	int representationType = ui->chbFill3D->isChecked() ? 1 : 0;
+	int representationType;
+	
+	if (ui->rb_wireframe->isChecked()) representationType = 0;
+	else if (ui->rb_randomFill->isChecked()) representationType = 1;
+	else if (ui->rb_flat->isChecked()) representationType = 2;
+	else if (ui->rb_nearNeighbor->isChecked()) representationType = 3;
+	else if (ui->rb_Goraud->isChecked()) representationType = 4;
 
-	vW->draw3DModel(model3D, phi, theta, projectionType, representationType, dz, R);
+	LightParams lp;
+
+	lp.lightPos = { (double)ui->sb_lightCoords_x->value(), (double)ui->sb_lightCoords_y->value(), (double)ui->sb_lightCoords_z->value() };
+
+	lp.I_L = { (double)ui->sb_lightColor_red->value(), (double)ui->sb_lightColor_green->value(), (double)ui->sb_lightColor_blue->value() };
+
+	lp.I_O = { (double)ui->sb_ambientLightColor_red->value(), (double)ui->sb_ambientLightColor_green->value(), (double)ui->sb_ambientLightColor_blue->value() };
+	lp.r_a = { ui->dsb_ambient_r->value(), ui->dsb_ambient_g->value(), ui->dsb_ambient_b->value() };
+	lp.r_d = { ui->dsb_difusion_r->value(), ui->dsb_difusion_g->value(), ui->dsb_difusion_b->value() };
+	lp.r_s = { ui->dsb_reflection_r->value(), ui->dsb_reflection_g->value(), ui->dsb_reflection_b->value() };
+
+	lp.cameraPos = { 0, 0, R }; //kamera je na normale priemetne vo vzdialenosti R
+
+	lp.h = ui->dsb_shininess->value();
+
+	vW->draw3DModel(model3D, phi, theta, projectionType, representationType, dz, R, lp);
 
 	vW->update();
 }

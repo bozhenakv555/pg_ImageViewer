@@ -5,13 +5,14 @@
 struct Vertex {
 	QPoint pos;
 	QColor color;
+	double z = 0;
 };
 
-struct ProjectedVertex {
-	QPoint pos;
-	QColor color;
-	double z;
-};
+//struct ProjectedVertex {
+//	QPoint pos;
+//	QColor color;
+//	double z;
+//};
 
 class ViewerWidget :public QWidget {
 	Q_OBJECT
@@ -149,8 +150,10 @@ public:
 	std::vector<QPoint>& getBSplinePoints() { return bSplinePoints; }
 
 	//3D
-	void draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R);
+	void draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R, const LightParams& lp);
 	void setPixelZ(int x, int y, double z, QColor& color);
+	Vector3D calculateNormal(double phi, double theta);
+	void phongLightModel(Point3D point, double phi, double theta, const LightParams& lp);
 
 public slots:
 	void paintEvent(QPaintEvent* event) Q_DECL_OVERRIDE;

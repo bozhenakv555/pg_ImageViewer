@@ -973,7 +973,7 @@ void ViewerWidget::drawBSplineCurve(QColor color)
 }
 
 
-void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R)
+void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R, const LightParams& lp)
 {
 	if (model.vertices.empty()) return;
 
@@ -1117,6 +1117,53 @@ void ViewerWidget::setPixelZ(int x, int y, double z, QColor& color)
 	}
 }
 
+Vector3D ViewerWidget::calculateNormal(double phi, double theta)
+{
+	Vector3D n;
+	n.x = sin(theta) * sin(phi);
+	n.y = sin(theta) * cos(phi);
+	n.z = cos(theta);
+	return n;
+}
+
+void ViewerWidget::phongLightModel(Point3D point, double phi, double theta, const LightParams& lp)
+{
+	//4 zakladne pre model jednotkove vektory:
+	Vector3D N, L, R, V;
+
+	N = calculateNormal(phi, theta); //normala, uz je jednotkovy vektor - normalizovany
+	L = (lp.lightPos - point).normalize(); //svetelny luc - jednotkovy vektor z daneho bodu k svetelnemu zdroju
+	//if (LdotN < 0) LdotN = 0; //vtedy svetlo dopada za plochu plosky a intenzita bude 0 - robi to iste, co ten max nizsie:
+	R = (N * 2 * std::max(0.0, L.dot(N)) - L).normalize(); //odrazeny luc - smer, do ktoreho je L odrazeny
+	V = (lp.cameraPos - point).normalize(); //vektor pohladu - jednotkovy vektor z daneho bodu ku kamere
+
+	//zlozky odrazu
+	Vector3D I_s, I_d, I_a;
+
+	//zrkadlova zlozka
+	double max0VRh = (std::pow(std::max(0.0, V.dot(R)), lp.h));
+	I_s = lp.I_L * lp.r_s * max0VRh;
+	//pretazila som * v point3d:
+	//I_s.x = lp.I_L.x * lp.r_s.x * max0VRh; //R
+	//I_s.y = lp.I_L.y * lp.r_s.y * max0VRh; //G
+	//I_s.z = lp.I_L.z * lp.r_s.z * max0VRh; //B
+
+	//difuzna zlozka
+	double max0LN = std::max(0.0, L.dot(N));
+	I_d = lp.I_L * lp.r_d * max0LN;
+	//I_d.x = lp.I_L.x * lp.r_d.x * max0LN;
+	//I_d.y = lp.I_L.y * lp.r_d.y * max0LN;
+	//I_d.z = lp.I_L.z * lp.r_d.z * max0LN;
+
+	//ambientna zlozka
+	I_a = lp.I_O * lp.r_a;
+	//I_a.x = lp.I_O.x * lp.r_a.x;
+	//I_a.y = lp.I_O.y * lp.r_a.y;
+	//I_a.z = lp.I_O.z * lp.r_a.z;
+
+	//vysledna intenzita
+	Vector3D I = I_s + I_d + I_a;
+}
 //Slots
 void ViewerWidget::paintEvent(QPaintEvent* event)
 {
