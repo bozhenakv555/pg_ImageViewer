@@ -709,7 +709,9 @@ void ViewerWidget::fillTrianglePart(int y1, int y2, double x1, double x2, double
 		int endX = (int)std::floor(std::max(x1, x2));
 
 		for (int x = startX; x <= endX; x++) {
-			setPixel(x, y, getColor(x, y, fillType));
+			QColor color = getColor(x, y, fillType); //zistime farbu pre dany pixel
+			double z_i = getZInterpolated(x, y, base_t0, base_t1, base_t2); //zistime hlbku z_i pre dany pixel
+			setPixelZ(x, y, z_i, color);
 		}
 
 		x1 += w1;
@@ -750,7 +752,7 @@ void ViewerWidget::fillTopTriangle(Vertex t0, Vertex t1, Vertex t2, int fillType
 
 QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
 {
-	// vzdialenosti od pixelu k jednotlivym vrcholom
+	//vzdialenosti od pixelu k jednotlivym vrcholom
 	int d0 = (x - t0.pos.x()) * (x - t0.pos.x()) +
 		(y - t0.pos.y()) * (y - t0.pos.y());
 
@@ -760,7 +762,7 @@ QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex 
 	int d2 = (x - t2.pos.x()) * (x - t2.pos.x()) +
 		(y - t2.pos.y()) * (y - t2.pos.y());
 
-	// vyberieme farbu najblizsieho vrcholu
+	//vyberieme farbu najblizsieho vrcholu
 	if (d0 <= d1 && d0 <= d2) {
 		return t0.color;
 	}
@@ -774,30 +776,30 @@ QColor ViewerWidget::getNearestColor(int x, int y, Vertex t0, Vertex t1, Vertex 
 
 QColor ViewerWidget::getBarycentricColor(int x, int y, Vertex t0, Vertex t1, Vertex t2)
 {
-	// celkova plocha trojuholnika T0,T1,T2
+	//celkova plocha trojuholnika T0,T1,T2
 	double A = abs((t1.pos.x() - t0.pos.x()) * (t2.pos.y() - t0.pos.y()) -
 		(t1.pos.y() - t0.pos.y()) * (t2.pos.x() - t0.pos.x())) / 2;
 
-	// plochy podtrojuholnikov s bodom P(x,y)
+	//plochy podtrojuholnikov s bodom P(x,y)
 	double A0 = abs((t1.pos.x() - x) * (t2.pos.y() - y) -
 		(t1.pos.y() - y) * (t2.pos.x() - x)) / 2;
 
 	double A1 = abs((t0.pos.x() - x) * (t2.pos.y() - y) -
 		(t0.pos.y() - y) * (t2.pos.x() - x)) / 2;
 
-	double A2 = A - A0 - A1; // tretia plocha (aby sme nemuseli pocitat znova)
+	double A2 = A - A0 - A1; //tretia plocha (aby sme nemuseli pocitat znova)
 
-	// vahy (barycentricke suradnice)
+	//vahy (barycentricke suradnice)
 	double l0 = A0 / A;
 	double l1 = A1 / A;
 	double l2 = A2 / A;
 
-	// interpolacia farby
+	//interpolacia farby
 	int r = (int)(l0 * t0.color.red() + l1 * t1.color.red() + l2 * t2.color.red());
 	int g = (int)(l0 * t0.color.green() + l1 * t1.color.green() + l2 * t2.color.green());
 	int b = (int)(l0 * t0.color.blue() + l1 * t1.color.blue() + l2 * t2.color.blue());
 
-	// orezanie na rozsah 0–255
+	//orezanie na rozsah 0–255
 	r = qBound(0, r, 255);
 	g = qBound(0, g, 255);
 	b = qBound(0, b, 255);
@@ -1007,8 +1009,8 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 	v.y = u.z * n.x - u.x * n.z;
 	v.z = u.x * n.y - u.y * n.x;
 
+	//transformacia vrcholov do view space
 	std::vector<Point3D> viewSpacePoints;
-
 	for (const Point3D& P : model.vertices) {
 		Point3D viewPoint;
 		viewPoint.x = P.x * v.x + P.y * v.y + P.z * v.z;
@@ -1016,6 +1018,17 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 		viewPoint.z = P.x * n.x + P.y * n.y + P.z * n.z - R;
 
 		viewSpacePoints.push_back(viewPoint);
+	}
+
+	//transformacia normal do view space
+	std::vector<Vector3D> viewSpaceNormals;
+	for (const Vector3D& N : model.normals) {
+		Vector3D viewNormal;
+		viewNormal.x = N.x * v.x + N.y * v.y + N.z * v.z;
+		viewNormal.y = N.x * u.x + N.y * u.y + N.z * u.z;
+		viewNormal.z = N.x * n.x + N.y * n.y + N.z * n.z;
+		//iba pre istotu znormalizujeme
+		viewSpaceNormals.push_back(viewNormal.normalize());
 	}
 
 	std::vector<QPoint> projectedPoints;
@@ -1098,9 +1111,9 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 			fillScanLine(clipped, zi, faceColor);
 		}
 		else if (representation_type == 3 || representation_type == 4) {
-			Vector3D n0 = model.normals[t.vertex_indexes[0]];
-			Vector3D n1 = model.normals[t.vertex_indexes[1]];
-			Vector3D n2 = model.normals[t.vertex_indexes[2]];
+			Vector3D n0 = viewSpaceNormals[t.vertex_indexes[0]];
+			Vector3D n1 = viewSpaceNormals[t.vertex_indexes[1]];
+			Vector3D n2 = viewSpaceNormals[t.vertex_indexes[2]];
 
 			QColor c0 = calculatePhongColor(v0, n0, lp);
 			QColor c1 = calculatePhongColor(v1, n1, lp);
@@ -1119,7 +1132,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 			}
 		}
 		
-		if (showWireframe) { //Iba Wireframe
+		if (showWireframe) { //iba Wireframe
 			for (size_t i = 0; i < clipped.size(); i++) {
 				QPoint p1 = clipped[i];
 				QPoint p2;
@@ -1150,14 +1163,33 @@ void ViewerWidget::setPixelZ(int x, int y, double z, QColor& color)
 	}
 }
 
-//Vector3D ViewerWidget::calculateNormal(double phi, double theta)
-//{
-//	Vector3D n;
-//	n.x = sin(theta) * sin(phi);
-//	n.y = sin(theta) * cos(phi);
-//	n.z = cos(theta);
-//	return n;
-//}
+double ViewerWidget::getZInterpolated(int x, int y, Vertex t0, Vertex t1, Vertex t2)
+{
+	//pre Gouraudovo tienovanie potrebujeme ziskat nielen farby Barycentrickou interpolaciou, a aj z_i aktualneho pixela pre z-buffer
+	
+	//celkova plocha trojuholnika T0,T1,T2
+	double A = abs((t1.pos.x() - t0.pos.x()) * (t2.pos.y() - t0.pos.y()) -
+		(t1.pos.y() - t0.pos.y()) * (t2.pos.x() - t0.pos.x())) / 2;
+
+	//plochy podtrojuholnikov s bodom P(x,y)
+	double A0 = abs((t1.pos.x() - x) * (t2.pos.y() - y) -
+		(t1.pos.y() - y) * (t2.pos.x() - x)) / 2;
+
+	double A1 = abs((t0.pos.x() - x) * (t2.pos.y() - y) -
+		(t0.pos.y() - y) * (t2.pos.x() - x)) / 2;
+
+	double A2 = A - A0 - A1; //tretia plocha (aby sme nemuseli pocitat znova)
+
+	//vahy (barycentricke suradnice)
+	double l0 = A0 / A;
+	double l1 = A1 / A;
+	double l2 = A2 / A;
+
+	//interpolacia z-ovej suradnice (hladane z_i pre dany pixel) -> miesame z-tove hlbky vrcholov presne podla ich vah
+	double z_i = (l0 * t0.z) + (l1 * t1.z) + (l2 * t2.z);
+
+	return z_i;
+}
 
 QColor ViewerWidget::calculatePhongColor(Point3D point, Vector3D normal, const LightParams& lp)
 {

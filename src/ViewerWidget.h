@@ -152,7 +152,7 @@ public:
 	//3D
 	void draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, bool showWireframe, double dz, double R, const LightParams& lp);
 	void setPixelZ(int x, int y, double z, QColor& color);
-	//Vector3D calculateNormal(double phi, double theta);
+	double getZInterpolated(int x, int y, Vertex t0, Vertex t1, Vertex t2);
 	QColor calculatePhongColor(Point3D point, Vector3D normal, const LightParams& lp);
 
 public slots:
