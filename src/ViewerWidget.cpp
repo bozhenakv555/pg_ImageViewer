@@ -1097,7 +1097,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 				else {
 					p2 = clipped[i + 1];
 				}
-				drawLineDDA(p1, p2, 0, Qt::black);
+				drawLineDDA(p1, p2, zi, Qt::black);
 			}
 		}
 		if (representation_type == 1) { //Filled
@@ -1142,7 +1142,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 				else {
 					p2 = clipped[i + 1];
 				}
-				drawLineDDA(p1, p2, 0.5, Qt::black); //pridala som offset, aby bolo vidno wireframe na vyplnenom modeli
+				drawLineDDA(p1, p2, zi + 0.2, Qt::black); //pridala som offset, aby bolo vidno wireframe na vyplnenom modeli
 			}
 		}
 	}
