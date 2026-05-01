@@ -72,6 +72,7 @@ void Model3D::createUVSphere(int P, int M, double r)
 			double z = r * sin(theta) * sin(phi);
 
 			vertices.push_back({ x,y,z });
+			normals.push_back(Vector3D{ x, y, z }.normalize()); //normala pre gulu so stredom v 0,0,0 je jej samotna pozicia, len ju znormalizujeme na dlzku 1
 		}
 	}
 	//triangulacia (prisne < P, M - zastavime pred poslednym stlpcom, aby neist out of bounds

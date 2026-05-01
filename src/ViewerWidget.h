@@ -150,7 +150,7 @@ public:
 	std::vector<QPoint>& getBSplinePoints() { return bSplinePoints; }
 
 	//3D
-	void draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R, const LightParams& lp);
+	void draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, bool showWireframe, double dz, double R, const LightParams& lp);
 	void setPixelZ(int x, int y, double z, QColor& color);
 	//Vector3D calculateNormal(double phi, double theta);
 	QColor calculatePhongColor(Point3D point, Vector3D normal, const LightParams& lp);

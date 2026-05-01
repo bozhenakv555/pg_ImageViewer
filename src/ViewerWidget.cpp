@@ -973,7 +973,7 @@ void ViewerWidget::drawBSplineCurve(QColor color)
 }
 
 
-void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, double dz, double R, const LightParams& lp)
+void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int projection_type, int representation_type, bool showWireframe, double dz, double R, const LightParams& lp)
 {
 	if (model.vertices.empty()) return;
 
@@ -986,7 +986,7 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 		for (int y = 0; y < h; y++) {
 			column.push_back(-DBL_MAX); //naplnime -nekonecnami
 		}
-		zBuffer.push_back(column); //vlozime riadok do mriezky - hlaneho pola
+		zBuffer.push_back(column); //vlozime riadok do mriezky - hlavneho pola
 	}
 
 	//Transformacia do pohladovej suradnicovej sustavy (View Space asi). Ju tvoria: suradnice vsetkych objektov v scene, pozicia kamery, priemetna, orientacia kamery
@@ -1055,27 +1055,26 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 
 		QColor faceColor = model.facesColors[i];
 
-		//ziskame "sprojektovane" - 2D body trojuholnikov
+		//pre vypocet svetla - ziskame 3D vrcholy plosok
+		Point3D v0 = viewSpacePoints[t.vertex_indexes[0]];
+		Point3D v1 = viewSpacePoints[t.vertex_indexes[1]];
+		Point3D v2 = viewSpacePoints[t.vertex_indexes[2]];
+
+		Vector3D faceNormal = ((v1 - v0).cross(v2 - v0)).normalize(); //normala plosky - trojuholnika: vektorovy sucin dvoch hran trojuholnika nam da kolmicu na jeho plochu
+
+		double zi = (v0.z + v1.z + v2.z) / 3.0; //priemer z = z_i pre buffer
+
+		//ziskame "sprojektovane" - 2D body trojuholnikov pre vykreslenie
 		std::vector<QPoint> facePoints = {
 			projectedPoints[t.vertex_indexes[0]],
 			projectedPoints[t.vertex_indexes[1]],
 			projectedPoints[t.vertex_indexes[2]]
 		};
 
-		//priemer z = z_i pre buffer a tie randomne farby
-		double z0 = viewSpacePoints[t.vertex_indexes[0]].z;
-		double z1 = viewSpacePoints[t.vertex_indexes[1]].z;
-		double z2 = viewSpacePoints[t.vertex_indexes[2]].z;
-		double zi = (z0 + z1 + z2) / 3.0;
-
-		//pre vypocet svetla - ziskame 3D vrcholy plosok
-		Point3D v0 = viewSpacePoints[t.vertex_indexes[0]];
-		Point3D v1 = viewSpacePoints[t.vertex_indexes[1]];
-		Point3D v2 = viewSpacePoints[t.vertex_indexes[2]];
-
 		std::vector<QPoint> clipped = clipSutherlandHodgman(facePoints);
+		if (clipped.empty()) continue;
 
-		if (representation_type == 0) { //Wireframe
+		if (representation_type == 0) { //Iba Wireframe
 			for (size_t i = 0; i < clipped.size(); i++) {
 				QPoint p1 = clipped[i];
 				QPoint p2;
@@ -1088,41 +1087,51 @@ void ViewerWidget::draw3DModel(Model3D model, double phi, double theta, int proj
 				drawLineDDA(p1, p2, 0, Qt::black);
 			}
 		}
-		else if (representation_type == 1) { //Filled
+		if (representation_type == 1) { //Filled
 			fillScanLine(clipped, zi, faceColor);
 		}
 		else if (representation_type == 2) { //flat shading - jedina normala pre kazdu plosku
-			//normala plosky - trojuholnika: vektorovy sucin dvoch hran trojuholnika nam da kolmicu na jeho plochu
-			Vector3D faceNormal = (v1 - v0).cross(v2 - v0);
 			//vypocitame tazisko trojuholnika
-			Point3D center = (v0 + v1 + v2) * (1/3);
+			Point3D center = (v0 + v1 + v2) * (1.0/3.0);
 			//vypocitame jednu farbu pre cely trojuholnik
 			QColor faceColor =  calculatePhongColor(center, faceNormal, lp);
-
 			fillScanLine(clipped, zi, faceColor);
 		}
-		else if (representation_type == 3) { //nearest neighbor - normala v kazdom z troch vrcholov
-			//vypocitame osvetlenie v kazdom vrchole zvlast
-			QColor c0 = calculatePhongColor(v0, v0, lp);
-			QColor c1 = calculatePhongColor(v1, v1, lp);
-			QColor c2 = calculatePhongColor(v2, v2, lp);
+		else if (representation_type == 3 || representation_type == 4) {
+			Vector3D n0 = model.normals[t.vertex_indexes[0]];
+			Vector3D n1 = model.normals[t.vertex_indexes[1]];
+			Vector3D n2 = model.normals[t.vertex_indexes[2]];
+
+			QColor c0 = calculatePhongColor(v0, n0, lp);
+			QColor c1 = calculatePhongColor(v1, n1, lp);
+			QColor c2 = calculatePhongColor(v2, n2, lp);
 
 			//vytvorime vertexy (2D pozicia + farba + z-hlbka)
 			Vertex vt0 = { projectedPoints[t.vertex_indexes[0]], c0, v0.z };
 			Vertex vt1 = { projectedPoints[t.vertex_indexes[1]], c1, v1.z };
 			Vertex vt2 = { projectedPoints[t.vertex_indexes[2]], c2, v2.z };
 
-			//posleme do fillTriangle z filltype = 1 - nearest neighbor
-			fillTriangle(vt0, vt1, vt2, 1);
+			if (representation_type == 3) {
+				fillTriangle(vt0, vt1, vt2, 1); //nearest neighbor (typ 1)
+			}
+			else {
+				fillTriangle(vt0, vt1, vt2, 2); //gouraud - barycentricka interpolacia (typ 2)
+			}
 		}
-	//test bez orezavania
-	//	QPoint p1 = projectedPoints[t.vertex_indexes[0]];
-	//	QPoint p2 = projectedPoints[t.vertex_indexes[1]];
-	//	QPoint p3 = projectedPoints[t.vertex_indexes[2]];
-
-	//	drawLineDDA(p1, p2, Qt::black);
-	//	drawLineDDA(p2, p3, Qt::black);
-	//	drawLineDDA(p3, p1, Qt::black);
+		
+		if (showWireframe) { //Iba Wireframe
+			for (size_t i = 0; i < clipped.size(); i++) {
+				QPoint p1 = clipped[i];
+				QPoint p2;
+				if (i == clipped.size() - 1) {
+					p2 = clipped[0];
+				}
+				else {
+					p2 = clipped[i + 1];
+				}
+				drawLineDDA(p1, p2, 0.5, Qt::black); //pridala som offset, aby bolo vidno wireframe na vyplnenom modeli
+			}
+		}
 	}
 }
 

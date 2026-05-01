@@ -589,13 +589,8 @@ void ImageViewer::render3D()
 	double dz = ui->dsb_distance->value();
 	double R = ui->dsb_cameraDistance->value();
 	int projectionType = ui->cb_projectionType->currentIndex();
-	int representationType;
-	
-	if (ui->rb_wireframe->isChecked()) representationType = 0;
-	else if (ui->rb_randomFill->isChecked()) representationType = 1;
-	else if (ui->rb_flat->isChecked()) representationType = 2;
-	else if (ui->rb_nearNeighbor->isChecked()) representationType = 3;
-	else if (ui->rb_Goraud->isChecked()) representationType = 4;
+	bool showWireframe = ui->chb_wireframe->isChecked();
+	int representationType = ui->cb_shadingType->currentIndex();
 
 	LightParams lp;
 
@@ -612,7 +607,7 @@ void ImageViewer::render3D()
 
 	lp.h = ui->dsb_shininess->value();
 
-	vW->draw3DModel(model3D, phi, theta, projectionType, representationType, dz, R, lp);
+	vW->draw3DModel(model3D, phi, theta, projectionType, representationType, showWireframe, dz, R, lp);
 
 	vW->update();
 }

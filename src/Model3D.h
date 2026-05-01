@@ -78,6 +78,7 @@ public:
 	std::vector<Point3D> vertices;
 	std::vector<Triangle> faces;
 	std::vector<QColor> facesColors;
+    std::vector<Vector3D> normals; //normala pre kazdy vertex
 
 	void createCube(double a);
 
